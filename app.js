@@ -8,7 +8,7 @@ const UI = {
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
-        ppl: '人物', pplTitle: '人物（この進度まで）', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から',
+        ppl: '人物', pplTitle: '人物（この進度まで）', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -18,7 +18,7 @@ const UI = {
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
-        ppl: '人物', pplTitle: '人物（到目前進度）', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起',
+        ppl: '人物', pplTitle: '人物（到目前進度）', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 const CONF_LABEL = { ja: {}, zh: { '本文確定': '文本確定', '強推論': '強推論', '推測': '推測', '未決': '未定' } };
@@ -41,11 +41,19 @@ async function init() {
   if (S.progress == null) return showStart();
   await loadBundles(); S.cur = Math.min(S.cur, S.progress); render();
 }
+// progress overlay while act data loads (a reader far into the story fetches ~50 files on the first visit)
+function loadingUI(done, total) {
+  let el = document.getElementById('loading');
+  if (!el) { el = document.createElement('div'); el.id = 'loading'; document.body.appendChild(el); }
+  el.innerHTML = `<div class="lbox"><div>${T('loading')} ${done} / ${total}</div><div class="lbar"><div style="width:${total ? Math.round(done * 100 / total) : 100}%"></div></div></div>`;
+}
+function loadingDone() { const el = document.getElementById('loading'); if (el) el.remove(); }
 async function loadBundles() {
-  for (let i = 0; i <= S.progress; i++) {
-    if (S.bundles[i] || !S.acts[i].has_content) continue;
-    S.bundles[i] = await getJSON(`data/${S.lang}/act_${S.acts[i].id}.json`);
-  }
+  const need = [];   // fetched in parallel: on a real server, 50 one-by-one requests took several seconds
+  for (let i = 0; i <= S.progress; i++) if (!S.bundles[i] && S.acts[i].has_content) need.push(i);
+  let done = 0; if (need.length) loadingUI(0, need.length);
+  try { await Promise.all(need.map(i => getJSON(`data/${S.lang}/act_${S.acts[i].id}.json`).then(b => { S.bundles[i] = b; loadingUI(++done, need.length); }))); }
+  finally { loadingDone(); }
   fold();
 }
 function fold() {
@@ -193,7 +201,12 @@ async function showCharPage(name) {
   if (!c) { try { c = S.cpages[name] = await getJSON(`data/${S.lang}/chars/${encodeURIComponent(name)}.json`); } catch (e) { return; } }
   if (c.unlock > S.progress) return;
   S.evmap = {};
-  const reg = (key, evs) => { S.evmap[key] = evs; return evChips(evs, key); };
+  // chips on character pages: one per act+speaker ("1-7・今汐 ×3"), opening the first of its lines
+  const reg = (key, evs) => {
+    const groups = []; (evs || []).forEach(e => { const l = (e.label || e.ref).replace(/（[^）]*）/g, ''); const g = groups.find(x => x.l === l); g ? g.n++ : groups.push({ l, e, n: 1 }); });
+    S.evmap[key] = groups.map(g => g.e);
+    return groups.length ? `<div class="evs">${groups.map((g, k) => `<button class="ev" data-ev="${key}:${k}">${esc(g.l)}${g.n > 1 ? ` ×${g.n}` : ''}</button>`).join('')}</div>` : '';
+  };
   const item = (it, key) => `<div class="citem">${badge(it.confidence)}${esc(it.text)}${it.more && c.more[it.more] ? ` <button class="morebtn" data-mo="${esc(it.more)}">${T('more')}</button>` : ''}${reg(key, it.evidence)}</div>`;
   page.innerHTML = `<p><button id="back">${T('back')}</button> <button id="plist">${T('pplTitle')}</button></p>
     <div class="pchar big">${icon(name)}<div><h1>${esc(c.disp || c.name)}</h1><div class="sub">${esc(c.title)}</div></div></div>
