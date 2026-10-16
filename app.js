@@ -8,7 +8,7 @@ const UI = {
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
-        ppl: '人物', pplTitle: '人物（この進度まで）', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…',
+        ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -18,7 +18,7 @@ const UI = {
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
-        ppl: '人物', pplTitle: '人物（到目前進度）', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…',
+        ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（本文整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 const CONF_LABEL = { ja: {}, zh: { '本文確定': '文本確定', '強推論': '強推論', '推測': '推測', '未決': '未定' } };
@@ -184,14 +184,19 @@ function bindNav(page) {
 
 /* ---------- character pages (site/chars → data/<lang>/chars) ----------
    Items whose refs reveal them after the reader's progress are folded behind a spoiler warning. */
-function showCharList() {
+function showCharList(tab) {
   const page = app.querySelector('#page'); S.panels = []; renderPanels();
-  const list = (S.cidx || []).filter(c => c.unlock <= S.progress);
-  const groups = arcGroups().map(g => ({ arc: g.arc, cs: list.filter(c => g.idx.includes(c.unlock)) })).filter(g => g.cs.length);
+  if (tab) S.ctab = tab; tab = S.ctab || 'play';
+  const an = c => (c.an || []).filter(r => r <= S.progress).length;
+  const list = (S.cidx || []).filter(c => c.unlock <= S.progress && (tab === 'play') === (c.kind === 'playable' || an(c) > 0));
+  const groups = arcGroups().map(g => ({ arc: g.arc, cs: list.filter(c => c.listed !== false && g.idx.includes(c.unlock)) })).concat([{ arc: T('offMain'), cs: list.filter(c => c.listed === false) }]).filter(g => g.cs.length);
+  const card = c => `<div class="chip cp" data-c="${esc(c.name)}">${icon(c.name)}<div class="tx"><div class="nm">${esc(c.disp || c.name)}</div><div class="no">${esc(c.title)}</div><div class="no">${c.listed !== false ? esc(S.acts[c.unlock].short) + T('firstAt') : ''}${an(c) ? `<span class="anb">${T('anN')} ${an(c)}</span>` : ''}</div></div></div>`;
   page.innerHTML = `<p><button id="back">${T('back')}</button></p><h1>${T('pplTitle')}</h1>` +
-    (groups.length ? groups.map(g => `<h2>${esc(g.arc)}</h2><div class="chips">${g.cs.map(c => `<div class="chip cp" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}</div><div class="no">${esc(c.title)}</div><div class="no">${esc(S.acts[c.unlock].short)}${T('firstAt')}</div></div></div>`).join('')}</div>`).join('')
+    `<div class="ctabs"><button data-t="play" class="${tab === 'play' ? 'on' : ''}">${T('tabPlay')}</button><button data-t="other" class="${tab === 'other' ? 'on' : ''}">${T('tabOther')}</button></div>` +
+    (groups.length ? groups.map(g => `<h2>${esc(g.arc)}</h2><div class="cgrid">${g.cs.map(card).join('')}</div>`).join('')
       : `<p class="empty">${T('noChars')}</p>`);
   page.querySelector('#back').onclick = () => go(S.cur);
+  page.querySelectorAll('.ctabs button').forEach(b => b.onclick = () => showCharList(b.dataset.t));
   page.querySelectorAll('.cp').forEach(el => el.onclick = () => showCharPage(el.dataset.c));
   window.scrollTo(0, 0);
 }
@@ -211,22 +216,32 @@ async function showCharPage(name) {
   page.innerHTML = `<p><button id="back">${T('back')}</button> <button id="plist">${T('pplTitle')}</button></p>
     <div class="pchar big">${icon(name)}<div><h1>${esc(c.disp || c.name)}</h1><div class="sub">${esc(c.title)}</div></div></div>
     <div class="card"><div class="n">${esc(c.intro)}</div>${reg('intro', c.intro_evidence)}</div>
+    ${(c.analysis || []).length ? (() => {
+      const an = (a, k) => `<div class="card acard">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
+      const all = c.analysis.map((a, k) => [a, k]), now = all.filter(([a]) => a.reveal <= S.progress), later = all.filter(([a]) => a.reveal > S.progress);
+      return `<h2>${T('analysis')}</h2>${now.map(([a, k]) => an(a, k)).join('')}` + (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([a, k]) => an(a, k)).join('')}</details>` : '');
+    })() : ''}
+    ${(() => { const hasAn = (c.analysis || []).some(a => a.reveal <= S.progress); return `${hasAn ? '' : `<p class="empty">${T('noAn')}</p>`}<details class="bio"${hasAn ? '' : ' open'}><summary>${T('bio')}</summary>`; })()}
     ${c.sections.filter(s => s.items.length).map((s, k) => {
       const all = s.items.map((it, j) => [it, j]), now = all.filter(([it]) => it.reveal <= S.progress), later = all.filter(([it]) => it.reveal > S.progress);
       return `<h2>${esc(s.title)}</h2>${now.map(([it, j]) => item(it, `s${k}_${j}`)).join('')}` +
         (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([it, j]) => item(it, `s${k}_${j}`)).join('')}</details>` : '');
-    }).join('')}`;
+    }).join('')}</details>`;
   page.querySelector('#back').onclick = () => go(S.cur);
   page.querySelector('#plist').onclick = () => showCharList();
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
-  page.querySelectorAll('.morebtn').forEach(el => el.onclick = () => moreModal(c, el.dataset.mo));
+  page.querySelectorAll('.morebtn[data-mo]').forEach(el => el.onclick = () => moreModal(c, el.dataset.mo));
+  page.querySelectorAll('.morebtn[data-an]').forEach(el => el.onclick = () => { const a = c.analysis[+el.dataset.an]; moreModal({ more: { x: a } }, 'x'); });
   window.scrollTo(0, 0);
 }
 // the reasoning window: long text is allowed here, in short paragraphs; folded if it reaches past the reader's progress
+// light markup for reasoning text: "## " starts a small heading, **…** is the key sentence, 「…」 quotes from the game stand out
+const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/「[^「」]*」/g, m => `<span class="q">${m}</span>`);
+const para = p => p.startsWith('## ') ? `<h4>${rich(p.slice(3))}</h4>` : `<p>${rich(p)}</p>`;
 function moreModal(c, id) {
   const mo = c.more[id]; if (!mo) return;
   const d = document.createElement('div'); d.className = 'modal-bg';
-  const body = `<h3>${badge(mo.confidence)}${esc(mo.title)}</h3>${mo.paragraphs.map(p => `<p>${esc(p)}</p>`).join('')}` +
+  const body = `<h3>${badge(mo.confidence)}${esc(mo.title)}</h3>${mo.summary ? `<div class="lead">${rich(mo.summary)}</div>` : ''}<div class="reason">${mo.paragraphs.map(para).join('')}</div>` +
     `<div class="evs">${(mo.evidence || []).map((e, k) => `<button class="ev" data-k="${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>`;
   d.innerHTML = `<div class="modal wide">${mo.reveal > S.progress ? `<details class="spoil"><summary>${T('spoil')}</summary>${body}</details>` : body}<div class="btns"><button class="primary" id="mclose">${T('close')}</button></div></div>`;
   d.onclick = e => { if (e.target === d) d.remove(); };

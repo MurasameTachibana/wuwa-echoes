@@ -2,13 +2,13 @@
   --bg: #f6f4ef; --panel: #ffffff; --ink: #1f2328; --muted: #6b7078; --line: #ddd8cc; --line2: #b9b3a3;
   --acc: #2c5a8c; --acc-bg: #e4edf7; --lock: #a8a398;
   --c-fix: #1e6b3a; --c-fix-bg: #e3f1e7; --c-strong: #2c5a8c; --c-strong-bg: #e4edf7; --c-guess: #8a5a0b; --c-guess-bg: #f8edd4; --c-open: #6b7078; --c-open-bg: #ecebe6;
-  --open: #2c5a8c; --adv: #8a5a0b; --res: #1e6b3a;
+  --open: #2c5a8c; --adv: #8a5a0b; --res: #1e6b3a; --quote: #6a4a1c; --hl: rgba(255,200,80,.38);
   font-family: "Hiragino Sans", "Yu Gothic UI", "Meiryo", "Noto Sans JP", sans-serif;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #16181c; --panel: #1f2227; --ink: #e8e6e0; --muted: #a3a79f; --line: #33373e; --line2: #4c525b; --acc: #8fb6e6; --acc-bg: #243445; --lock: #5a5e66;
     --c-fix: #9bd6ad; --c-fix-bg: #1f3a2a; --c-strong: #8fb6e6; --c-strong-bg: #243445; --c-guess: #e8c27a; --c-guess-bg: #3e3119; --c-open: #a3a79f; --c-open-bg: #2b2e34;
-    --open: #8fb6e6; --adv: #e8c27a; --res: #9bd6ad; }
+    --open: #8fb6e6; --adv: #e8c27a; --res: #9bd6ad; --quote: #e6d3a8; --hl: rgba(143,182,230,.28); }
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; background: var(--bg); color: var(--ink); line-height: 1.75; font-size: 16px; }
@@ -175,3 +175,27 @@ details.spoil[open] { background: transparent; }
 #loading .lbox { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px 22px; min-width: 240px; font-size: 14px; color: var(--muted); }
 #loading .lbar { height: 6px; border-radius: 3px; background: var(--line); margin-top: 10px; overflow: hidden; }
 #loading .lbar div { height: 100%; background: var(--acc); transition: width .15s; }
+.acard .t { font-weight: 600; }
+.acard .morebtn { margin-top: 6px; }
+
+/* reasoning text (考察) */
+.modal.wide .lead { margin: 0 0 18px; padding: 10px 14px; border-left: 3px solid var(--acc); background: var(--bg); border-radius: 0 8px 8px 0; font-weight: 500; }
+.modal.wide .reason { max-width: 40em; }
+.modal.wide .reason h4 { margin: 22px 0 8px; font-size: 15px; color: var(--acc); letter-spacing: .04em; }
+.modal.wide .reason h4:first-child { margin-top: 4px; }
+.modal.wide .reason p { margin: 0 0 14px; text-indent: 1em; }
+.modal.wide .reason strong, .acard strong { font-weight: 700; background: linear-gradient(transparent 62%, var(--hl, rgba(255,200,80,.35)) 62%); }
+.q { color: var(--quote, inherit); }
+
+/* character list: two tabs, cards of one size */
+.ctabs { display: flex; gap: 6px; margin: 4px 0 8px; }
+.ctabs button { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel); color: var(--ink); cursor: pointer; }
+.ctabs button.on { background: var(--acc); border-color: var(--acc); color: var(--panel); }
+.cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+.cgrid .chip { height: 84px; min-width: 0; }
+.cgrid .chip .tx { min-width: 0; flex: 1; }
+.cgrid .chip .nm, .cgrid .chip .no { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.anb { margin-left: 8px; padding: 0 7px; border-radius: 999px; background: var(--acc-bg); color: var(--acc); font-size: 12px; }
+/* life sections folded under the 考察 */
+details.bio { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 8px; }
+details.bio > summary { cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; }
