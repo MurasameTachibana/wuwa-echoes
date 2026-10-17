@@ -247,10 +247,16 @@ async function showCharPage(name) {
 // for copying); hover shows a side card, click opens the evidence (pinned side card inside the reasoning window).
 const qnorm = s => (s || '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '').replace(/[\s、。，,．.！？!?…・·「」『』“”"—―\-－~〜（）()]/g, '');
 const QEV = [];
-const rich = (t, evs) => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/「([^「」]*)」/g, (m, inner) => {
+const rich = (t, evs) => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/「([^「」]*)」/g, (m, inner, off, str) => {
   if (evs && evs.length) {
     const n = qnorm(inner), ev = n && evs.find(e => qnorm(e.ja_plain || e.ja).includes(n));
-    if (ev) { QEV.push(ev); return `<span class="ql" data-qi="${QEV.length - 1}" tabindex="0"><span class="qb">「</span>${inner}<span class="qb">」</span></span>`; }
+    if (ev) {
+      QEV.push(ev);
+      // without the brackets a line-final 。 would collide with what follows (「…。」と → …。と, 「…。」， → …。，): hide it too
+      let tail = '';
+      if (str.slice(off + m.length).replace(/<\/strong>/g, '').trim()) { const k = inner.search(/[。．.]+$/); if (k > 0) { tail = inner.slice(k); inner = inner.slice(0, k); } }
+      return `<span class="ql" data-qi="${QEV.length - 1}" tabindex="0"><span class="qb">「</span>${inner}<span class="qb">${tail}」</span></span>`;
+    }
   }
   return `<span class="q">${m}</span>`;
 });
