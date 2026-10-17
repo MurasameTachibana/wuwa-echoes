@@ -8,7 +8,7 @@ const UI = {
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
-        ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）',
+        ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）', evN: '根拠を見る',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -18,9 +18,11 @@ const UI = {
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
-        ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（本文整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）',
+        ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（本文整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
+// evidence chips: up to two stay in view; more fold under one line so reading isn't interrupted
+const evFold = html => { const n = (html.match(/class="ev"/g) || []).length; return n > 2 ? `<details class="evfold"><summary>${T('evN')}（${n}）</summary>${html}</details>` : html; };
 const CONF_LABEL = { ja: {}, zh: { '本文確定': '文本確定', '強推論': '強推論', '推測': '推測', '未決': '未定' } };
 const ACT_LABEL = { ja: { open: '提示', advance: '進展', resolve: '解決' }, zh: { open: '提出', advance: '進展', resolve: '解開' } };
 const disp = name => (S.chars[name] && S.chars[name].disp) || name;
@@ -102,10 +104,12 @@ function render() {
       <a href="#" class="set" id="idx">${T('index')}</a>
       ${S.langs.length > 1 ? `<a href="#" class="set" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
       <a href="#" class="set" id="setp">${T('setp')}</a>
+      <a href="#" class="set themebtn" id="thm" title="theme">${document.documentElement.dataset.theme === 'light' ? '☾' : '☀'}</a>
     </div><div class="wrap actbar" id="actbar"></div></header>
     <div class="wrap main"><div class="page" id="page"></div><div class="panels" id="panels"></div></div>`;
   renderBar();
   app.querySelector('#setp').onclick = e => { e.preventDefault(); showStart(); };
+  app.querySelector('#thm').onclick = e => { e.preventDefault(); const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; try { localStorage.setItem('wuwa-theme', t); } catch (_) {} e.target.textContent = t === 'light' ? '☾' : '☀'; };
   app.querySelector('#ppl').onclick = e => { e.preventDefault(); showCharList(); };
   app.querySelector('#idx').onclick = e => { e.preventDefault(); push({ type: 'index', id: 'index', label: T('index') }, true); };
   const lg = app.querySelector('#lng'); if (lg) lg.onclick = async e => { e.preventDefault(); S.lang = S.lang === 'zh' ? 'ja' : 'zh'; S.panels = []; save(); await loadLang(); await loadBundles(); document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja'; render(); };
@@ -146,7 +150,7 @@ function modal(html, btns) {
   document.body.appendChild(d);
 }
 const badge = c => `<span class="badge ${CONF[c] || 'open'}">${esc((CONF_LABEL[S.lang] || {})[c] || c)}</span>`;
-const evChips = (evs, key) => evs && evs.length ? `<div class="evs">${evs.map((e, k) => `<button class="ev" data-ev="${key}:${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>` : '';
+const evChips = (evs, key) => evs && evs.length ? evFold(`<div class="evs">${evs.map((e, k) => `<button class="ev" data-ev="${key}:${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>`) : '';
 function icon(name, size) {
   const c = S.chars[name]; const ini = name.slice(0, 1);
   return `<div class="ic">${c && c.icon ? `<img src="icons/${c.icon}" alt="">` : esc(ini)}</div>`;
@@ -210,7 +214,7 @@ async function showCharPage(name) {
   const reg = (key, evs) => {
     const groups = []; (evs || []).forEach(e => { const l = (e.label || e.ref).replace(/（[^）]*）/g, ''); const g = groups.find(x => x.l === l); g ? g.n++ : groups.push({ l, e, n: 1 }); });
     S.evmap[key] = groups.map(g => g.e);
-    return groups.length ? `<div class="evs">${groups.map((g, k) => `<button class="ev" data-ev="${key}:${k}">${esc(g.l)}${g.n > 1 ? ` ×${g.n}` : ''}</button>`).join('')}</div>` : '';
+    return groups.length ? evFold(`<div class="evs">${groups.map((g, k) => `<button class="ev" data-ev="${key}:${k}">${esc(g.l)}${g.n > 1 ? ` ×${g.n}` : ''}</button>`).join('')}</div>`) : '';
   };
   const item = (it, key) => `<div class="citem">${badge(it.confidence)}${esc(it.text)}${it.more && c.more[it.more] ? ` <button class="morebtn" data-mo="${esc(it.more)}">${T('more')}</button>` : ''}${reg(key, it.evidence)}</div>`;
   page.innerHTML = `<p><button id="back">${T('back')}</button> <button id="plist">${T('pplTitle')}</button></p>
@@ -242,7 +246,7 @@ function moreModal(c, id) {
   const mo = c.more[id]; if (!mo) return;
   const d = document.createElement('div'); d.className = 'modal-bg';
   const body = `<h3>${badge(mo.confidence)}${esc(mo.title)}</h3>${mo.summary ? `<div class="lead">${rich(mo.summary)}</div>` : ''}<div class="reason">${mo.paragraphs.map(para).join('')}</div>` +
-    `<div class="evs">${(mo.evidence || []).map((e, k) => `<button class="ev" data-k="${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>`;
+    evFold(`<div class="evs">${(mo.evidence || []).map((e, k) => `<button class="ev" data-k="${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>`);
   d.innerHTML = `<div class="modal wide">${mo.reveal > S.progress ? `<details class="spoil"><summary>${T('spoil')}</summary>${body}</details>` : body}<div class="btns"><button class="primary" id="mclose">${T('close')}</button></div></div>`;
   d.onclick = e => { if (e.target === d) d.remove(); };
   d.querySelector('#mclose').onclick = () => d.remove();
