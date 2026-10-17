@@ -254,3 +254,20 @@ details.evfold > summary::-webkit-details-marker { display: none; }
 details.evfold > summary::before { content: "▸ "; color: var(--gold); }
 details.evfold[open] > summary::before { content: "▾ "; }
 details.evfold > summary:hover { color: var(--gold); }
+
+/* quotes linked to their source line: dotted underline, brackets hidden */
+.ql { cursor: pointer; border-radius: 2px; transition: background .15s; }
+.ql:hover, .ql.on, .ql:focus-visible { background: color-mix(in srgb, var(--gold) 20%, transparent); outline: none; }
+.ql .qb { display: none; }
+.ql { text-decoration: underline dotted color-mix(in srgb, var(--gold) 80%, transparent); text-decoration-thickness: 1.5px; text-underline-offset: .3em; }
+#qtip { position: fixed; z-index: 40; background: var(--panel); color: var(--ink); border: 1px solid var(--line2); border-radius: 8px; padding: 10px 12px; box-shadow: 0 8px 28px rgba(0,0,0,.28); font-size: 14px; line-height: 1.65; }
+#qtip .s { color: var(--gold); font-size: 12px; margin-bottom: 4px; } #qtip .lb { color: var(--muted); margin-left: 8px; }
+#qtip .qgo { margin-top: 8px; font-size: 12px; }
+#qtip.dock { box-shadow: 0 -4px 24px rgba(0,0,0,.3); max-height: 40vh; overflow-y: auto; }
+#qtip.pin { max-height: calc(100vh - 16px); overflow-y: auto; }
+#qtip.pin.dock { max-height: 55vh; }
+#qtip .qx { float: right; border: none; background: none; font-size: 18px; line-height: 1; padding: 0 2px 0 8px; color: var(--muted); }
+#qtip .dt { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+#qtip .qctx > div { padding: 3px 6px; opacity: .62; }
+#qtip .qctx > .cur { opacity: 1; background: color-mix(in srgb, var(--gold) 15%, transparent); border-radius: 4px; }
+#qtip .qctx .sp { color: var(--gold); font-size: 12px; margin-right: 6px; }

@@ -223,7 +223,7 @@ async function showCharPage(name) {
     <div class="pchar big">${icon(name)}<div><h1>${esc(c.disp || c.name)}</h1><div class="sub">${esc(c.title)}</div></div></div>
     <div class="card"><div class="n">${esc(c.intro)}</div>${reg('intro', c.intro_evidence)}</div>
     ${(c.analysis || []).length ? (() => {
-      const an = (a, k) => `<div class="card acard">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
+      const an = (a, k) => `<div class="card acard">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary, a.evidence)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
       const RANK = { '本文確定': 0, '強推論': 1, '推測': 2, '未決': 3 };   // firmer readings first, then guesses, then open questions
       const all = c.analysis.map((a, k) => [a, k]).sort((x, y) => ((RANK[x[0].confidence] ?? 2) - (RANK[y[0].confidence] ?? 2)) || x[1] - y[1]), now = all.filter(([a]) => a.reveal <= S.progress), later = all.filter(([a]) => a.reveal > S.progress);
       return `<h2>${T('analysis')}</h2>${now.map(([a, k]) => an(a, k)).join('')}` + (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([a, k]) => an(a, k)).join('')}</details>` : '');
@@ -243,17 +243,81 @@ async function showCharPage(name) {
 }
 // the reasoning window: long text is allowed here, in short paragraphs; folded if it reaches past the reader's progress
 // light markup for reasoning text: "## " starts a small heading, **…** is the key sentence, 「…」 quotes from the game stand out
-const rich = t => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/「[^「」]*」/g, m => `<span class="q">${m}</span>`);
-const para = p => p.startsWith('## ') ? `<h4>${rich(p.slice(3))}</h4>` : `<p>${rich(p)}</p>`;
+// a 「…」 found in one of the item's evidence lines links to that line: dotted underline, brackets hidden (kept in the text
+// for copying); hover shows a side card, click opens the evidence (pinned side card inside the reasoning window).
+const qnorm = s => (s || '').replace(/<rt>.*?<\/rt>/g, '').replace(/<[^>]+>/g, '').replace(/[\s、。，,．.！？!?…・·「」『』“”"—―\-－~〜（）()]/g, '');
+const QEV = [];
+const rich = (t, evs) => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/「([^「」]*)」/g, (m, inner) => {
+  if (evs && evs.length) {
+    const n = qnorm(inner), ev = n && evs.find(e => qnorm(e.ja_plain || e.ja).includes(n));
+    if (ev) { QEV.push(ev); return `<span class="ql" data-qi="${QEV.length - 1}" tabindex="0"><span class="qb">「</span>${inner}<span class="qb">」</span></span>`; }
+  }
+  return `<span class="q">${m}</span>`;
+});
+const para = (p, evs) => p.startsWith('## ') ? `<h4>${rich(p.slice(3), evs)}</h4>` : `<p>${rich(p, evs)}</p>`;
+const qtip = document.createElement('div'); qtip.id = 'qtip'; qtip.hidden = true; document.body.appendChild(qtip);
+const canHover = matchMedia('(hover: hover)').matches;
+let qtTimer, qPinned = false, qAnchor = null;
+// short card on hover; "pinned" card (line + surrounding dialogue) when a quote is clicked inside the reasoning window,
+// so the window stays open and the reader keeps their place
+function tipHTML(ev, full) {
+  const head = `<div class="s">${full ? '<button class="qx" aria-label="close">×</button>' : ''}${esc(ev.speaker || '')}<span class="lb">${esc(ev.label || ev.ref)}</span></div>`;
+  if (!full) return head + `<div class="l">${ev.ja}</div><button class="qgo">${T('ctx')} →</button>`;
+  const ctx = ev.ctx && ev.ctx.length ? `<div class="qctx">${ev.ctx.map(l => `<div class="${l.cur ? 'cur' : ''}"><span class="sp">${esc(l.speaker || '')}</span>${l.ja}</div>`).join('')}</div>` : `<div class="l">${ev.ja}</div>`;
+  return head + (ev.doc_title ? `<div class="dt">${esc(ev.doc_title)}</div>` : '') + ctx;
+}
+function showEvTip(ev, anchor, full) {
+  if (!ev) return; clearTimeout(qtTimer);
+  qtip.innerHTML = tipHTML(ev, full); qtip.classList.toggle('pin', full); qPinned = full; qAnchor = anchor; qtip._ev = ev; qtip.hidden = false;
+  document.querySelectorAll('.ql.on').forEach(x => x.classList.remove('on')); if (anchor.classList.contains('ql')) anchor.classList.add('on');
+  placeTip(anchor);
+  const cur = full && qtip.querySelector('.qctx .cur'); if (cur) qtip.scrollTop = cur.offsetTop - qtip.clientHeight / 2 + cur.offsetHeight / 2;
+}
+const showTip = (el, full) => showEvTip(QEV[+el.dataset.qi], el, !!full);
+function closeTip() { qPinned = false; qtip.hidden = true; qtip.classList.remove('pin'); document.querySelectorAll('.ql.on').forEach(x => x.classList.remove('on')); }
+// beside the text column (aligned with the quoted line) so it never covers what is being read;
+// with no room on either side it docks at the bottom edge, or at the top when the quote itself is low on the screen
+function placeTip(el) {
+  const col = el.closest('.modal') || el.closest('#page') || el.closest('.panel') || document.body;
+  const c = col.getBoundingClientRect(), r = el.getClientRects()[0] || el.getBoundingClientRect();
+  const G = 16, MIN = 260, right = innerWidth - c.right - 2 * G, left = c.left - 2 * G, st = qtip.style;
+  qtip.classList.remove('dock'); st.right = st.bottom = 'auto';
+  if (right >= MIN || left >= MIN) {
+    const w = Math.min(qPinned ? 440 : 380, Math.max(right, left));
+    st.width = w + 'px'; st.left = (right >= MIN ? c.right + G : c.left - G - w) + 'px';
+    st.top = Math.max(8, Math.min(r.top - 10, innerHeight - qtip.offsetHeight - 8)) + 'px';
+  } else {
+    qtip.classList.add('dock'); st.width = 'auto'; st.left = st.right = G + 'px';
+    const hb = el.closest('.modal') ? 0 : (document.querySelector('header')?.getBoundingClientRect().bottom || 0);
+    if (r.bottom > innerHeight * 0.6) st.top = (hb + 8) + 'px'; else { st.top = 'auto'; st.bottom = G + 'px'; }
+  }
+}
+const hideTip = () => { if (qPinned) return; clearTimeout(qtTimer); qtTimer = setTimeout(() => { if (!qPinned) closeTip(); }, 400); };
+function openQ(qi) { closeTip(); const ev = QEV[+qi]; if (!ev) return; document.querySelectorAll('.modal-bg').forEach(d => d.remove()); openEvidence(ev, true); }
+document.addEventListener('mouseover', e => { if (!canHover || qPinned) return; const el = e.target.closest('.ql'); if (el) showTip(el); else if (e.target.closest('#qtip')) clearTimeout(qtTimer); });
+document.addEventListener('mouseout', e => { if (canHover && e.target.closest('.ql, #qtip')) hideTip(); });
+document.addEventListener('click', e => {
+  if (e.target.closest('.qx')) { closeTip(); return; }
+  if (e.target.closest('.qgo')) { if (qAnchor && qAnchor.closest('.modal')) showEvTip(qtip._ev, qAnchor, true); else openQ(qtip.dataset.qi = qAnchor ? qAnchor.dataset.qi : qtip.dataset.qi); return; }
+  const el = e.target.closest('.ql');
+  if (el) { if (el.closest('.modal')) showTip(el, canHover); else if (canHover) openQ(el.dataset.qi); else showTip(el); return; }
+  if (!e.target.closest('#qtip')) closeTip();
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && !qtip.hidden) { closeTip(); e.stopPropagation(); return; }
+  const el = e.target.closest && e.target.closest('.ql'); if (el && e.key === 'Enter') el.closest('.modal') ? showTip(el, true) : openQ(el.dataset.qi);
+}, true);
+addEventListener('scroll', e => { if (canHover && !qPinned && !(e.target.closest && e.target.closest('#qtip'))) closeTip(); }, true);
 function moreModal(c, id) {
   const mo = c.more[id]; if (!mo) return;
   const d = document.createElement('div'); d.className = 'modal-bg';
-  const body = `<h3>${badge(mo.confidence)}${esc(mo.title)}</h3>${mo.summary ? `<div class="lead">${rich(mo.summary)}</div>` : ''}<div class="reason">${mo.paragraphs.map(para).join('')}</div>` +
+  const body = `<h3>${badge(mo.confidence)}${esc(mo.title)}</h3>${mo.summary ? `<div class="lead">${rich(mo.summary, mo.evidence)}</div>` : ''}<div class="reason">${mo.paragraphs.map(p => para(p, mo.evidence)).join('')}</div>` +
     evFold(`<div class="evs">${(mo.evidence || []).map((e, k) => `<button class="ev" data-k="${k}">${esc(e.label || e.ref)}</button>`).join('')}</div>`);
   d.innerHTML = `<div class="modal wide">${mo.reveal > S.progress ? `<details class="spoil"><summary>${T('spoil')}</summary>${body}</details>` : body}<div class="btns"><button class="primary" id="mclose">${T('close')}</button></div></div>`;
-  d.onclick = e => { if (e.target === d) d.remove(); };
-  d.querySelector('#mclose').onclick = () => d.remove();
-  d.querySelectorAll('.ev').forEach(b => b.onclick = () => { d.remove(); openEvidence(mo.evidence[+b.dataset.k], true); });
+  d.onclick = e => { if (e.target === d) { closeTip(); d.remove(); } };
+  d.querySelector('#mclose').onclick = () => { closeTip(); d.remove(); };
+  // evidence buttons open the pinned side card too, so the reasoning window stays open
+  d.querySelectorAll('.ev').forEach(b => b.onclick = e => { e.stopPropagation(); showEvTip(mo.evidence[+b.dataset.k], b, true); });
   document.body.appendChild(d);
 }
 
