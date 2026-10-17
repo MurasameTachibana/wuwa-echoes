@@ -18,7 +18,7 @@ const UI = {
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
-        ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（本文整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
+        ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（文本整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 // evidence chips: up to two stay in view; more fold under one line so reading isn't interrupted
