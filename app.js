@@ -193,7 +193,9 @@ function showCharList(tab) {
   if (tab) S.ctab = tab; tab = S.ctab || 'play';
   const an = c => (c.an || []).filter(r => r <= S.progress).length;
   const list = (S.cidx || []).filter(c => c.unlock <= S.progress && (tab === 'play') === (c.kind === 'playable' || an(c) > 0));
-  const groups = arcGroups().map(g => ({ arc: g.arc, cs: list.filter(c => c.listed !== false && g.idx.includes(c.unlock)) })).concat([{ arc: T('offMain'), cs: list.filter(c => c.listed === false) }]).filter(g => g.cs.length);
+  // within each arc, characters with readable 考察 come first (stable: otherwise first-appearance order)
+  const byAn = cs => cs.map((c, i) => [c, i]).sort((a, b) => ((an(b[0]) > 0) - (an(a[0]) > 0)) || a[1] - b[1]).map(x => x[0]);
+  const groups = arcGroups().map(g => ({ arc: g.arc, cs: byAn(list.filter(c => c.listed !== false && g.idx.includes(c.unlock))) })).concat([{ arc: T('offMain'), cs: byAn(list.filter(c => c.listed === false)) }]).filter(g => g.cs.length);
   const card = c => `<div class="chip cp" data-c="${esc(c.name)}">${icon(c.name)}<div class="tx"><div class="nm">${esc(c.disp || c.name)}</div><div class="no">${esc(c.title)}</div><div class="no">${c.listed !== false ? esc(S.acts[c.unlock].short) + T('firstAt') : ''}${an(c) ? `<span class="anb">${T('anN')} ${an(c)}</span>` : ''}</div></div></div>`;
   page.innerHTML = `<p><button id="back">${T('back')}</button></p><h1>${T('pplTitle')}</h1>` +
     `<div class="ctabs"><button data-t="play" class="${tab === 'play' ? 'on' : ''}">${T('tabPlay')}</button><button data-t="other" class="${tab === 'other' ? 'on' : ''}">${T('tabOther')}</button></div>` +
@@ -222,7 +224,8 @@ async function showCharPage(name) {
     <div class="card"><div class="n">${esc(c.intro)}</div>${reg('intro', c.intro_evidence)}</div>
     ${(c.analysis || []).length ? (() => {
       const an = (a, k) => `<div class="card acard">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
-      const all = c.analysis.map((a, k) => [a, k]), now = all.filter(([a]) => a.reveal <= S.progress), later = all.filter(([a]) => a.reveal > S.progress);
+      const RANK = { '本文確定': 0, '強推論': 1, '推測': 2, '未決': 3 };   // firmer readings first, then guesses, then open questions
+      const all = c.analysis.map((a, k) => [a, k]).sort((x, y) => ((RANK[x[0].confidence] ?? 2) - (RANK[y[0].confidence] ?? 2)) || x[1] - y[1]), now = all.filter(([a]) => a.reveal <= S.progress), later = all.filter(([a]) => a.reveal > S.progress);
       return `<h2>${T('analysis')}</h2>${now.map(([a, k]) => an(a, k)).join('')}` + (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([a, k]) => an(a, k)).join('')}</details>` : '');
     })() : ''}
     ${(() => { const hasAn = (c.analysis || []).some(a => a.reveal <= S.progress); return `${hasAn ? '' : `<p class="empty">${T('noAn')}</p>`}<details class="bio"${hasAn ? '' : ' open'}><summary>${T('bio')}</summary>`; })()}
