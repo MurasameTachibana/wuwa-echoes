@@ -271,3 +271,23 @@ details.evfold > summary:hover { color: var(--gold); }
 #qtip .qctx > div { padding: 3px 6px; opacity: .62; }
 #qtip .qctx > .cur { opacity: 1; background: color-mix(in srgb, var(--gold) 15%, transparent); border-radius: 4px; }
 #qtip .qctx .sp { color: var(--gold); font-size: 12px; margin-right: 6px; }
+
+/* 章のことば */
+.ess-intro { color: var(--muted); font-size: 14px; margin: 0 0 18px; }
+.ess { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 22px 26px; margin: 0 0 18px; }
+.ess-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-bottom: 14px; }
+.ess-ch { font-weight: 600; font-size: 15px; }
+.ess-range { color: var(--muted); font-size: 13px; }
+.ess-phrases { border-left: 3px solid var(--acc); padding: 4px 0 4px 18px; margin: 0 0 12px; }
+.ess-ph { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin: 6px 0; }
+.ess-mark { color: var(--acc); font-size: 18px; width: 1.2em; text-align: center; }
+.ess-txt { font-size: 24px; font-weight: 600; letter-spacing: .04em; font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif TC", serif; }
+.ess-ph.image .ess-txt { font-size: 20px; font-weight: 500; }
+.ess-src { color: var(--muted); font-size: 12px; }
+.ess-sub { color: var(--muted); font-size: 15px; margin: 0 0 14px; font-style: italic; }
+.ess-body p { margin: 0 0 10px; line-height: 1.85; }
+.ess-ev { margin-top: 12px; }
+.ess-lab { font-size: 12px; color: var(--muted); }
+.ess-how { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.ess-how summary { cursor: pointer; }
+@media (max-width: 600px) { .ess { padding: 16px; } .ess-txt { font-size: 20px; } }

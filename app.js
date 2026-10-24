@@ -9,6 +9,7 @@ const UI = {
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
         ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）', evN: '根拠を見る',
+        ess: '章のことば', essTitle: '章のことば', essRead: '編者の読み', essHow: 'この読みについて', essSrc: '出典', essEv: '根拠の台詞',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -19,6 +20,7 @@ const UI = {
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
         ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（文本整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
+        ess: '章之語', essTitle: '章之語', essRead: '編者的解讀', essHow: '關於這個解讀', essSrc: '出處', essEv: '依據的台詞',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 // evidence chips: up to two stay in view; more fold under one line so reading isn't interrupted
@@ -34,7 +36,8 @@ function save() { try { localStorage.setItem('wuwa_site', JSON.stringify({ progr
 function restore() { try { const o = JSON.parse(localStorage.getItem('wuwa_site') || 'null'); if (o) { S.progress = o.progress; S.lang = o.lang || 'ja'; S.cur = o.cur || 0; } } catch (e) {} }
 
 async function loadLang() { S.acts = await getJSON(`data/${S.lang}/acts.json`); S.chars = await getJSON(`data/${S.lang}/characters.json`); S.bundles = {}; S.cpages = {};
-  try { S.cidx = await getJSON(`data/${S.lang}/chars.json`); } catch (e) { S.cidx = []; } }
+  try { S.cidx = await getJSON(`data/${S.lang}/chars.json`); } catch (e) { S.cidx = []; }
+  try { S.essays = await getJSON(`data/${S.lang}/essays.json`); } catch (e) { S.essays = null; } }
 async function init() {
   try { S.langs = (await getJSON('data/langs.json')).langs; } catch (e) {}
   restore(); if (!S.langs.includes(S.lang)) S.lang = 'ja';
@@ -101,6 +104,7 @@ function render() {
       <div class="brand">${T('site')}<small>${esc(S.acts[S.cur] ? S.acts[S.cur].arc : '')}</small></div>
       <div class="bar" id="bar"></div>
       <a href="#" class="set" id="ppl">${T('ppl')}</a>
+      ${S.essays ? `<a href="#" class="set" id="ess">${T('ess')}</a>` : ''}
       <a href="#" class="set" id="idx">${T('index')}</a>
       ${S.langs.length > 1 ? `<a href="#" class="set" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
       <a href="#" class="set" id="setp">${T('setp')}</a>
@@ -111,6 +115,7 @@ function render() {
   app.querySelector('#setp').onclick = e => { e.preventDefault(); showStart(); };
   app.querySelector('#thm').onclick = e => { e.preventDefault(); const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; try { localStorage.setItem('wuwa-theme', t); } catch (_) {} e.target.textContent = t === 'light' ? '☾' : '☀'; };
   app.querySelector('#ppl').onclick = e => { e.preventDefault(); showCharList(); };
+  const es = app.querySelector('#ess'); if (es) es.onclick = e => { e.preventDefault(); showEssays(); };
   app.querySelector('#idx').onclick = e => { e.preventDefault(); push({ type: 'index', id: 'index', label: T('index') }, true); };
   const lg = app.querySelector('#lng'); if (lg) lg.onclick = async e => { e.preventDefault(); S.lang = S.lang === 'zh' ? 'ja' : 'zh'; S.panels = []; save(); await loadLang(); await loadBundles(); document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja'; render(); };
   renderAct(); renderPanels();
@@ -188,6 +193,27 @@ function bindNav(page) {
 
 /* ---------- character pages (site/chars → data/<lang>/chars) ----------
    Items whose refs reveal them after the reader's progress are folded behind a spoiler warning. */
+/* 章のことば: one phrase (or a thesis/antithesis pair) per chapter; later chapters fold behind the spoiler notice */
+function showEssays() {
+  const page = app.querySelector('#page'); S.panels = []; renderPanels(); S.evmap = {};
+  const E = S.essays || { entries: [] };
+  const role = r => r === 'anti' ? '⇔' : r === 'image' ? '◇' : '';
+  const card = (e, k) => {
+    const ph = e.phrases.map(p => `<div class="ess-ph ${p.role}">${role(p.role) ? `<span class="ess-mark">${role(p.role)}</span>` : ''}<span class="ess-txt">${esc(p.text)}</span><span class="ess-src">${esc(p.src)}</span></div>`).join('');
+    S.evmap['e' + k] = e.evidence;
+    const body = `<div class="ess-head"><div class="ess-ch">${esc(e.chapter)}</div><div class="ess-range">${esc(e.range)}</div></div>
+      <div class="ess-phrases">${ph}</div>${e.sub ? `<div class="ess-sub">${esc(e.sub)}</div>` : ''}
+      <div class="ess-body">${e.body.map(t => `<p>${esc(t)}</p>`).join('')}</div>
+      <div class="ess-ev">${evChips(e.evidence, "e" + k)}</div>
+      <details class="ess-how"><summary>${T('essHow')}</summary><p>${esc(e.method)}</p></details>`;
+    return `<article class="ess">${e.reveal > S.progress ? `<details class="spoil"><summary>${esc(e.chapter)} — ${T('spoil')}</summary>${body}</details>` : body}</article>`;
+  };
+  page.innerHTML = `<p><button id="back">${T('back')}</button></p><h1>${T('essTitle')}</h1><p class="ess-intro">${esc(E.intro || '')}</p>` +
+    E.entries.map(card).join('');
+  page.querySelector('#back').onclick = () => go(S.cur);
+  page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
+  window.scrollTo(0, 0);
+}
 function showCharList(tab) {
   const page = app.querySelector('#page'); S.panels = []; renderPanels();
   if (tab) S.ctab = tab; tab = S.ctab || 'play';
