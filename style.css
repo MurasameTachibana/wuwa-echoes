@@ -291,3 +291,5 @@ details.evfold > summary:hover { color: var(--gold); }
 .ess-how { margin-top: 10px; font-size: 13px; color: var(--muted); }
 .ess-how summary { cursor: pointer; }
 @media (max-width: 600px) { .ess { padding: 16px; } .ess-txt { font-size: 20px; } }
+.ess-phrases.withmain .ess-ph.thesis .ess-txt, .ess-phrases.withmain .ess-ph.anti .ess-txt { font-size: 17px; font-weight: 500; }
+.ess-phrases.withmain .ess-ph.main { margin-bottom: 2px; }

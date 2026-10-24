@@ -202,7 +202,7 @@ function showEssays() {
     const ph = e.phrases.map(p => `<div class="ess-ph ${p.role}">${role(p.role) ? `<span class="ess-mark">${role(p.role)}</span>` : ''}<span class="ess-txt">${esc(p.text)}</span><span class="ess-src">${esc(p.src)}</span></div>`).join('');
     S.evmap['e' + k] = e.evidence;
     const body = `<div class="ess-head"><div class="ess-ch">${esc(e.chapter)}</div><div class="ess-range">${esc(e.range)}</div></div>
-      <div class="ess-phrases">${ph}</div>${e.sub ? `<div class="ess-sub">${esc(e.sub)}</div>` : ''}
+      <div class="ess-phrases${e.phrases.some(p => p.role === "main") && e.phrases.length > 1 ? " withmain" : ""}">${ph}</div>${e.sub ? `<div class="ess-sub">${esc(e.sub)}</div>` : ''}
       <div class="ess-body">${e.body.map(t => `<p>${esc(t)}</p>`).join('')}</div>
       <div class="ess-ev">${evChips(e.evidence, "e" + k)}</div>
       <details class="ess-how"><summary>${T('essHow')}</summary><p>${esc(e.method)}</p></details>`;
