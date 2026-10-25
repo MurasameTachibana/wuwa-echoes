@@ -3,7 +3,7 @@ const UI = {
   ja: { site: '鳴潮 物語解析', arc: '今州篇', intro: '本文の引用に基づく解析です。進度を選ぶと、その幕までの内容だけが表示されます。', where: 'どこまでプレイ済みですか',
         lang: '言語', read: 'この進度で読む', later: '進度は後からヘッダーで変更できます', index: '索引', setp: '進度を変更', locked: '未プレイの幕（クリックで進度を更新）',
         played: 'はプレイ済みですか？', playedHint: '進度を更新すると、この幕までの内容（解析・人物・謎の進展）が表示されます。', notyet: 'まだ', update: 'プレイ済み、進度を更新',
-        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', first: '初登場',
+        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', facts: 'この幕で分かったこと', seeChar: '人物ファイルで詳しく', first: '初登場',
         next: '次の幕へ', nextLocked: '次の幕', gateHint: 'プレイ済みなら進度を更新', end: 'ここまで（続きは準備中）', closeAll: 'すべて閉じる', close: '閉じる',
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
@@ -14,7 +14,7 @@ const UI = {
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
         played: '已經玩過了嗎？', playedHint: '更新進度後，會顯示到這一幕為止的內容（解析、人物、謎題進展）。', notyet: '還沒', update: '玩過了，更新進度',
-        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', first: '初登場',
+        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', facts: '這一幕確認的事', seeChar: '詳見人物檔案', first: '初登場',
         next: '下一幕', nextLocked: '下一幕', gateHint: '玩過的話請更新進度', end: '到此為止（後續準備中）', closeAll: '全部關閉', close: '關閉',
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
@@ -169,14 +169,16 @@ function renderAct() {
   const mcard = (m, k) => `<div class="card click mcard" data-m="${esc(m.id)}"><div class="t"><span class="tag ${m.action}">${ACT_LABEL[S.lang][m.action]}</span>${esc(mtitle(m))}</div>${m.action === 'open' ? `<div class="q">${esc(m.question)}</div>` : ''}<div class="n">${esc(m.note)}</div>${reg('m' + k, m.evidence)}</div>`;
   page.innerHTML = `
     <h1>${esc(a.title)}</h1><div class="sub">${esc(a.chapter)} ${esc(a.act)}</div>
+    ${b.key ? `<div class="actkey">${esc(b.key)}</div>` : ''}
     <div class="syn">${b.synopsis.map(s => `<p>${esc(s)}</p>`).join('')}</div>
     ${opens.length ? `<h2>${T('newM')}</h2>${opens.map((m, k) => mcard(m, 'o' + k)).join('')}` : ''}
     ${advs.length ? `<h2>${T('advM')}</h2>${advs.map((m, k) => mcard(m, 'a' + k)).join('')}` : ''}
+    ${(b.facts || []).length ? `<h2>${T('facts')}</h2><ul class="facts">${b.facts.map((f, k) => `<li><span>${esc(f.text)}</span>${reg('f' + k, f.evidence)}</li>`).join('')}</ul>` : ''}
     ${b.characters.length ? `<h2>${T('chars')}</h2><div class="chips">${b.characters.map(c => `<div class="chip" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}${c.new ? `<small>${T('first')}</small>` : ''}</div><div class="no">${esc(c.note)}</div></div></div>`).join('')}</div>` : ''}
-    ${b.highlights.length ? `<h2>${T('hl')}</h2>${b.highlights.map((h, k) => `<div class="card"><div class="t">${badge(h.confidence)}${esc(h.title)}</div><div class="n">${esc(h.body)}</div>${reg('h' + k, h.evidence)}</div>`).join('')}` : ''}
+    ${b.highlights.length ? `<h2>${T('hl')}</h2>${b.highlights.map((h, k) => `<div class="card"><div class="t">${badge(h.confidence)}${esc(h.title)}</div><div class="n">${esc(h.body)}</div>${(h.char || []).length ? `<div class="seechar">→ ${T('seeChar')}：${h.char.map(n => `<a href="#" class="rc" data-c="${esc(n)}">${esc((S.chars[n] && S.chars[n].disp) || n)}</a>`).join('・')}</div>` : ''}${reg('h' + k, h.evidence)}</div>`).join('')}` : ''}
     ${navHtml()}`;
   page.querySelectorAll('.mcard').forEach(el => el.onclick = e => { if (!e.target.closest('.ev')) openMystery(el.dataset.m, true); });
-  page.querySelectorAll('.chip, .rc').forEach(el => el.onclick = () => openChar(el.dataset.c, true));
+  page.querySelectorAll('.chip, .rc').forEach(el => el.onclick = e => { e.preventDefault(); openChar(el.dataset.c, true); });
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
   bindNav(page);
 }

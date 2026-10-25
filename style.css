@@ -54,6 +54,11 @@ header .set { font-size: 13px; color: var(--muted); white-space: nowrap; }
 .page .sub { color: var(--muted); font-size: 14px; margin-bottom: 16px; }
 .page h2 { font-size: 16px; font-weight: 600; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .syn p { margin: 0 0 8px; }
+.actkey { margin: 10px 0 14px; padding: 8px 12px; border-left: 3px solid var(--gold); background: var(--acc-bg); border-radius: 0 6px 6px 0; font-size: 17px; line-height: 1.6; }
+.facts { margin: 0 0 8px; padding-left: 1.2em; }
+.facts li { margin: 0 0 6px; }
+.facts li .evs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
+.seechar { margin: 6px 0 2px; font-size: 14px; color: var(--muted); }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 0 0 10px; }
 .card.click { cursor: pointer; }
 .card.click:hover { border-color: var(--acc); }
