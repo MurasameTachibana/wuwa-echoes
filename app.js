@@ -174,8 +174,8 @@ function renderAct() {
     ${opens.length ? `<h2>${T('newM')}</h2>${opens.map((m, k) => mcard(m, 'o' + k)).join('')}` : ''}
     ${advs.length ? `<h2>${T('advM')}</h2>${advs.map((m, k) => mcard(m, 'a' + k)).join('')}` : ''}
     ${(b.facts || []).length ? `<h2>${T('facts')}</h2><ul class="facts">${b.facts.map((f, k) => `<li><span>${esc(f.text)}</span>${reg('f' + k, f.evidence)}</li>`).join('')}</ul>` : ''}
-    ${b.characters.length ? `<h2>${T('chars')}</h2><div class="chips">${b.characters.map(c => `<div class="chip" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}${c.new ? `<small>${T('first')}</small>` : ''}</div><div class="no">${esc(c.note)}</div></div></div>`).join('')}</div>` : ''}
     ${b.highlights.length ? `<h2>${T('hl')}</h2>${b.highlights.map((h, k) => `<div class="card"><div class="t">${badge(h.confidence)}${esc(h.title)}</div><div class="n">${esc(h.body)}</div>${(h.char || []).length ? `<div class="seechar">→ ${T('seeChar')}：${h.char.map(n => `<a href="#" class="rc" data-c="${esc(n)}">${esc((S.chars[n] && S.chars[n].disp) || n)}</a>`).join('・')}</div>` : ''}${reg('h' + k, h.evidence)}</div>`).join('')}` : ''}
+    ${b.characters.length ? `<h2>${T('chars')}</h2><div class="chips">${b.characters.map(c => `<div class="chip" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}${c.new ? `<small>${T('first')}</small>` : ''}</div><div class="no">${esc(c.note)}</div></div></div>`).join('')}</div>` : ''}
     ${navHtml()}`;
   page.querySelectorAll('.mcard').forEach(el => el.onclick = e => { if (!e.target.closest('.ev')) openMystery(el.dataset.m, true); });
   page.querySelectorAll('.chip, .rc').forEach(el => el.onclick = e => { e.preventDefault(); openChar(el.dataset.c, true); });
