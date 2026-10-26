@@ -58,7 +58,7 @@ header .set { font-size: 13px; color: var(--muted); white-space: nowrap; }
 .facts { margin: 0 0 8px; padding-left: 1.2em; }
 .facts li { margin: 0 0 6px; }
 .facts li .evs { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 6px; vertical-align: middle; }
-.seechar { margin: 6px 0 2px; font-size: 14px; color: var(--muted); }
+
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 16px; margin: 0 0 10px; }
 .card.click { cursor: pointer; }
 .card.click:hover { border-color: var(--acc); }
@@ -298,3 +298,18 @@ details.evfold > summary:hover { color: var(--gold); }
 @media (max-width: 600px) { .ess { padding: 16px; } .ess-txt { font-size: 20px; } }
 .ess-phrases.withmain .ess-ph.thesis .ess-txt, .ess-phrases.withmain .ess-ph.anti .ess-txt { font-size: 17px; font-weight: 500; }
 .ess-phrases.withmain .ess-ph.main { margin-bottom: 2px; }
+
+/* side menu */
+.hamb { flex: 0 0 auto; font-size: 18px; line-height: 1; padding: 6px 10px; }
+#drawer-bg { position: fixed; inset: 0; z-index: 30; background: rgba(0,0,0,.35); }
+#drawer { position: fixed; top: 0; right: 0; bottom: 0; z-index: 31; width: min(280px, 80vw); background: var(--panel); border-left: 1px solid var(--line2); box-shadow: -8px 0 28px rgba(0,0,0,.25); padding: 56px 8px 16px; display: flex; flex-direction: column; gap: 2px; }
+#drawer[hidden], #drawer-bg[hidden] { display: none; }
+#drawer a { display: block; padding: 12px 16px; border-radius: 8px; color: var(--ink); text-decoration: none; font-size: 15px; }
+#drawer a:hover { background: var(--acc-bg); color: var(--acc); }
+/* highlight -> character analysis link (symbol only) */
+.xan { margin-left: 8px; padding: 0 6px; border: none; background: none; color: var(--gold); font-size: 15px; line-height: 1.4; cursor: pointer; vertical-align: baseline; }
+.xan:hover, .xan:focus-visible { color: var(--acc); }
+#qtip .pchar, .xpanel .pchar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+#qtip .xk, .xpanel .xk { font-size: 12px; color: var(--muted); }
+#qtip .xt, .xpanel .xt { font-weight: 600; margin: 4px 0; }
+.acard.flash { outline: 2px solid var(--gold); }

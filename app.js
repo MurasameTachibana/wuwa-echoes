@@ -3,7 +3,7 @@ const UI = {
   ja: { site: '鳴潮 物語解析', arc: '今州篇', intro: '本文の引用に基づく解析です。進度を選ぶと、その幕までの内容だけが表示されます。', where: 'どこまでプレイ済みですか',
         lang: '言語', read: 'この進度で読む', later: '進度は後からヘッダーで変更できます', index: '索引', setp: '進度を変更', locked: '未プレイの幕（クリックで進度を更新）',
         played: 'はプレイ済みですか？', playedHint: '進度を更新すると、この幕までの内容（解析・人物・謎の進展）が表示されます。', notyet: 'まだ', update: 'プレイ済み、進度を更新',
-        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', facts: 'この幕で分かったこと', seeChar: '人物ファイルで詳しく', first: '初登場',
+        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', facts: 'この幕で分かったこと', seeChar: '人物ファイルで詳しく', menu: 'メニュー', xan: '人物ファイルの考察', goAn: '人物ページのこの考察へ', theme: 'テーマ切替', first: '初登場',
         next: '次の幕へ', nextLocked: '次の幕', gateHint: 'プレイ済みなら進度を更新', end: 'ここまで（続きは準備中）', closeAll: 'すべて閉じる', close: '閉じる',
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
@@ -14,7 +14,7 @@ const UI = {
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
         played: '已經玩過了嗎？', playedHint: '更新進度後，會顯示到這一幕為止的內容（解析、人物、謎題進展）。', notyet: '還沒', update: '玩過了，更新進度',
-        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', facts: '這一幕確認的事', seeChar: '詳見人物檔案', first: '初登場',
+        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', facts: '這一幕確認的事', seeChar: '詳見人物檔案', menu: '選單', xan: '人物檔案的考察', goAn: '前往人物頁的這段考察', theme: '切換主題', first: '初登場',
         next: '下一幕', nextLocked: '下一幕', gateHint: '玩過的話請更新進度', end: '到此為止（後續準備中）', closeAll: '全部關閉', close: '關閉',
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
@@ -44,7 +44,7 @@ async function init() {
   await loadLang();
   document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja';
   if (S.progress == null) return showStart();
-  await loadBundles(); S.cur = Math.min(S.cur, S.progress); render();
+  await loadBundles(); S.cur = Math.min(S.cur, S.progress); render(); try { history.replaceState({ v: 'act', cur: S.cur }, ''); } catch (e) {}
 }
 // progress overlay while act data loads (a reader far into the story fetches ~50 files on the first visit)
 function loadingUI(done, total) {
@@ -103,23 +103,45 @@ function render() {
   app.innerHTML = `<header><div class="wrap">
       <div class="brand">${T('site')}<small>${esc(S.acts[S.cur] ? S.acts[S.cur].arc : '')}</small></div>
       <div class="bar" id="bar"></div>
-      <a href="#" class="set" id="ppl">${T('ppl')}</a>
-      ${S.essays ? `<a href="#" class="set" id="ess">${T('ess')}</a>` : ''}
-      <a href="#" class="set" id="idx">${T('index')}</a>
-      ${S.langs.length > 1 ? `<a href="#" class="set" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
-      <a href="#" class="set" id="setp">${T('setp')}</a>
-      <a href="#" class="set themebtn" id="thm" title="theme">${document.documentElement.dataset.theme === 'light' ? '☾' : '☀'}</a>
+      <button class="hamb" id="hamb" aria-label="${T('menu')}" aria-expanded="false">☰</button>
     </div><div class="wrap actbar" id="actbar"></div></header>
+    <div id="drawer-bg" hidden></div>
+    <nav id="drawer" hidden aria-label="${T('menu')}">
+      <a href="#" id="ppl">${T('ppl')}</a>
+      ${S.essays ? `<a href="#" id="ess">${T('ess')}</a>` : ''}
+      <a href="#" id="idx">${T('index')}</a>
+      ${S.langs.length > 1 ? `<a href="#" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
+      <a href="#" id="setp">${T('setp')}</a>
+      <a href="#" id="thm">${document.documentElement.dataset.theme === 'light' ? '☾' : '☀'} ${T('theme')}</a>
+    </nav>
     <div class="wrap main"><div class="page" id="page"></div><div class="panels" id="panels"></div></div>`;
   renderBar();
-  app.querySelector('#setp').onclick = e => { e.preventDefault(); showStart(); };
-  app.querySelector('#thm').onclick = e => { e.preventDefault(); const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; try { localStorage.setItem('wuwa-theme', t); } catch (_) {} e.target.textContent = t === 'light' ? '☾' : '☀'; };
-  app.querySelector('#ppl').onclick = e => { e.preventDefault(); showCharList(); };
-  const es = app.querySelector('#ess'); if (es) es.onclick = e => { e.preventDefault(); showEssays(); };
-  app.querySelector('#idx').onclick = e => { e.preventDefault(); push({ type: 'index', id: 'index', label: T('index') }, true); };
-  const lg = app.querySelector('#lng'); if (lg) lg.onclick = async e => { e.preventDefault(); S.lang = S.lang === 'zh' ? 'ja' : 'zh'; S.panels = []; save(); await loadLang(); await loadBundles(); document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja'; render(); };
+  app.querySelector('#hamb').onclick = () => app.querySelector('#drawer').hidden ? openDrawer() : closeDrawer();
+  app.querySelector('#drawer-bg').onclick = closeDrawer;
+  const dr = (id, f) => { const el = app.querySelector('#' + id); if (el) el.onclick = e => { e.preventDefault(); closeDrawer(); f(e); }; };
+  dr('setp', () => showStart());
+  dr('thm', () => { const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; try { localStorage.setItem('wuwa-theme', t); } catch (_) {} app.querySelector('#thm').textContent = (t === 'light' ? '☾' : '☀') + ' ' + T('theme'); });
+  dr('ppl', () => showCharList());
+  dr('ess', () => showEssays());
+  dr('idx', () => push({ type: 'index', id: 'index', label: T('index') }, true));
+  dr('lng', async () => { S.lang = S.lang === 'zh' ? 'ja' : 'zh'; S.panels = []; save(); await loadLang(); await loadBundles(); document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja'; render(); });
   renderAct(); renderPanels();
 }
+/* side menu (☰) */
+function openDrawer() { app.querySelector('#drawer').hidden = false; app.querySelector('#drawer-bg').hidden = false; app.querySelector('#hamb').setAttribute('aria-expanded', 'true'); }
+function closeDrawer() { const d = app.querySelector('#drawer'); if (!d) return; d.hidden = true; app.querySelector('#drawer-bg').hidden = true; app.querySelector('#hamb').setAttribute('aria-expanded', 'false'); }
+/* browser history: act <-> character page / list / essays, so "back" returns to the place being read (scroll included) */
+function leave() { try { history.replaceState(Object.assign({ v: 'act', cur: S.cur }, history.state || {}, { y: scrollY }), ''); } catch (e) {} }
+function navTo(st) { leave(); try { history.pushState(st, ''); } catch (e) {} }
+const goBack = () => (history.state && history.state.v !== 'act' && history.length > 1) ? history.back() : go(S.cur);
+addEventListener('popstate', e => {
+  const st = e.state; if (!st || !app.querySelector('#page')) return;
+  closeDrawer(); closeTip();
+  if (st.v === 'act') { S.cur = st.cur; S.openArc = null; S.panels = []; fold(); renderAct(); renderPanels(); renderBar(); requestAnimationFrame(() => scrollTo(0, st.y || 0)); }
+  else if (st.v === 'char') showCharPage(st.name, st.k, true, st.y);
+  else if (st.v === 'list') showCharList(st.tab, true, st.y);
+  else if (st.v === 'ess') showEssays(true, st.y);
+});
 /* progress bar: one group per arc (篇); only one arc shows its acts, the others fold into a single button */
 const arcGroups = () => { const g = []; S.acts.forEach((a, i) => { if (!g.length || g[g.length - 1].arc !== a.arc) g.push({ arc: a.arc, idx: [] }); g[g.length - 1].idx.push(i); }); return g; };
 function renderBar() {
@@ -141,7 +163,7 @@ function renderBar() {
     if (c) box.scrollLeft = Math.max(0, c.offsetLeft - box.offsetLeft - 40);
   document.documentElement.style.setProperty('--hh', app.querySelector('header').offsetHeight + 'px');   // panels stick below the header
 }
-function go(i) { S.cur = i; S.openArc = null; S.panels = []; save(); fold(); renderAct(); renderPanels(); window.scrollTo(0, 0); renderBar(); app.querySelector('.brand small').textContent = S.acts[i].arc; }
+function go(i) { if (i !== S.cur || (history.state && history.state.v !== 'act')) navTo({ v: 'act', cur: i }); S.cur = i; S.openArc = null; S.panels = []; save(); fold(); renderAct(); renderPanels(); window.scrollTo(0, 0); renderBar(); app.querySelector('.brand small').textContent = S.acts[i].arc; }
 function gate(i) {
   const a = S.acts[i];
   modal(`<p><b>${esc(a.chapter)} ${esc(a.act)}</b> ${T('played')}<br><span style="color:var(--muted);font-size:14px">${T('playedHint')}</span></p>`,
@@ -174,11 +196,16 @@ function renderAct() {
     ${opens.length ? `<h2>${T('newM')}</h2>${opens.map((m, k) => mcard(m, 'o' + k)).join('')}` : ''}
     ${advs.length ? `<h2>${T('advM')}</h2>${advs.map((m, k) => mcard(m, 'a' + k)).join('')}` : ''}
     ${(b.facts || []).length ? `<h2>${T('facts')}</h2><ul class="facts">${b.facts.map((f, k) => `<li><span>${esc(f.text)}</span>${reg('f' + k, f.evidence)}</li>`).join('')}</ul>` : ''}
-    ${b.highlights.length ? `<h2>${T('hl')}</h2>${b.highlights.map((h, k) => `<div class="card"><div class="t">${badge(h.confidence)}${esc(h.title)}</div><div class="n">${esc(h.body)}</div>${(h.char || []).length ? `<div class="seechar">→ ${T('seeChar')}：${h.char.map(n => `<a href="#" class="rc" data-c="${esc(n)}">${esc((S.chars[n] && S.chars[n].disp) || n)}</a>`).join('・')}</div>` : ''}${reg('h' + k, h.evidence)}</div>`).join('')}` : ''}
+    ${b.highlights.length ? `<h2>${T('hl')}</h2>${b.highlights.map((h, k) => `<div class="card"><div class="t">${badge(h.confidence)}${esc(h.title)}${h.link && h.link.reveal <= S.progress ? `<button class="xan" data-h="${k}" aria-label="${esc(T('xan') + '：' + disp(h.link.name))}">◈</button>` : ''}</div><div class="n">${esc(h.body)}</div>${reg('h' + k, h.evidence)}</div>`).join('')}` : ''}
     ${b.characters.length ? `<h2>${T('chars')}</h2><div class="chips">${b.characters.map(c => `<div class="chip" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}${c.new ? `<small>${T('first')}</small>` : ''}</div><div class="no">${esc(c.note)}</div></div></div>`).join('')}</div>` : ''}
     ${navHtml()}`;
   page.querySelectorAll('.mcard').forEach(el => el.onclick = e => { if (!e.target.closest('.ev')) openMystery(el.dataset.m, true); });
   page.querySelectorAll('.chip, .rc').forEach(el => el.onclick = e => { e.preventDefault(); openChar(el.dataset.c, true); });
+  page.querySelectorAll('.xan').forEach(el => {
+    const lk = b.highlights[+el.dataset.h].link;
+    if (canHover) { el.onmouseenter = () => showXanTip(lk, el); el.onmouseleave = hideTip; }
+    el.onclick = e => { e.stopPropagation(); closeTip(); push({ type: 'xan', link: lk, label: disp(lk.name) }, true); };
+  });
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
   bindNav(page);
 }
@@ -196,7 +223,8 @@ function bindNav(page) {
 /* ---------- character pages (site/chars → data/<lang>/chars) ----------
    Items whose refs reveal them after the reader's progress are folded behind a spoiler warning. */
 /* 章のことば: one phrase (or a thesis/antithesis pair) per chapter; later chapters fold behind the spoiler notice */
-function showEssays() {
+function showEssays(fromPop, y) {
+  if (!fromPop) navTo({ v: 'ess' });
   const page = app.querySelector('#page'); S.panels = []; renderPanels(); S.evmap = {};
   const E = S.essays || { entries: [] };
   const role = r => r === 'anti' ? '⇔' : r === 'image' ? '◇' : '';
@@ -212,11 +240,12 @@ function showEssays() {
   };
   page.innerHTML = `<p><button id="back">${T('back')}</button></p><h1>${T('essTitle')}</h1><p class="ess-intro">${esc(E.intro || '')}</p>` +
     E.entries.map(card).join('');
-  page.querySelector('#back').onclick = () => go(S.cur);
+  page.querySelector('#back').onclick = goBack;
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
-  window.scrollTo(0, 0);
+  window.scrollTo(0, y || 0);
 }
-function showCharList(tab) {
+function showCharList(tab, fromPop, y) {
+  if (!fromPop) navTo({ v: 'list', tab });
   const page = app.querySelector('#page'); S.panels = []; renderPanels();
   if (tab) S.ctab = tab; tab = S.ctab || 'play';
   const an = c => (c.an || []).filter(r => r <= S.progress).length;
@@ -229,17 +258,18 @@ function showCharList(tab) {
     `<div class="ctabs"><button data-t="play" class="${tab === 'play' ? 'on' : ''}">${T('tabPlay')}</button><button data-t="other" class="${tab === 'other' ? 'on' : ''}">${T('tabOther')}</button></div>` +
     (groups.length ? groups.map(g => `<h2>${esc(g.arc)}</h2><div class="cgrid">${g.cs.map(card).join('')}</div>`).join('')
       : `<p class="empty">${T('noChars')}</p>`);
-  page.querySelector('#back').onclick = () => go(S.cur);
-  page.querySelectorAll('.ctabs button').forEach(b => b.onclick = () => showCharList(b.dataset.t));
+  page.querySelector('#back').onclick = goBack;
+  page.querySelectorAll('.ctabs button').forEach(b => b.onclick = () => { try { history.replaceState({ v: 'list', tab: b.dataset.t }, ''); } catch (e) {} showCharList(b.dataset.t, true); });
   page.querySelectorAll('.cp').forEach(el => el.onclick = () => showCharPage(el.dataset.c));
-  window.scrollTo(0, 0);
+  window.scrollTo(0, y || 0);
 }
-async function showCharPage(name) {
+async function showCharPage(name, k, fromPop, y) {
   const page = app.querySelector('#page');
   let c = S.cpages[name];
   if (!c) { try { c = S.cpages[name] = await getJSON(`data/${S.lang}/chars/${encodeURIComponent(name)}.json`); } catch (e) { return; } }
   if (c.unlock > S.progress) return;
-  S.evmap = {};
+  if (!fromPop) navTo({ v: 'char', name, k });
+  S.evmap = {}; S.panels = []; renderPanels();
   // chips on character pages: one per act+speaker ("1-7・今汐 ×3"), opening the first of its lines
   const reg = (key, evs) => {
     const groups = []; (evs || []).forEach(e => { const l = (e.label || e.ref).replace(/（[^）]*）/g, ''); const g = groups.find(x => x.l === l); g ? g.n++ : groups.push({ l, e, n: 1 }); });
@@ -251,7 +281,7 @@ async function showCharPage(name) {
     <div class="pchar big">${icon(name)}<div><h1>${esc(c.disp || c.name)}</h1><div class="sub">${esc(c.title)}</div></div></div>
     <div class="card"><div class="n">${esc(c.intro)}</div>${reg('intro', c.intro_evidence)}</div>
     ${(c.analysis || []).length ? (() => {
-      const an = (a, k) => `<div class="card acard">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary, a.evidence)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
+      const an = (a, k) => `<div class="card acard" data-k="${k}">${badge(a.confidence)}<span class="t">${esc(a.title)}</span><div class="n">${rich(a.summary, a.evidence)}</div>${a.paragraphs.length ? `<button class="morebtn" data-an="${k}">${T('more')}</button>` : ''}${reg('a' + k, a.evidence)}</div>`;
       const RANK = { '本文確定': 0, '強推論': 1, '推測': 2, '未決': 3 };   // firmer readings first, then guesses, then open questions
       const all = c.analysis.map((a, k) => [a, k]).sort((x, y) => ((RANK[x[0].confidence] ?? 2) - (RANK[y[0].confidence] ?? 2)) || x[1] - y[1]), now = all.filter(([a]) => a.reveal <= S.progress), later = all.filter(([a]) => a.reveal > S.progress);
       return `<h2>${T('analysis')}</h2>${now.map(([a, k]) => an(a, k)).join('')}` + (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([a, k]) => an(a, k)).join('')}</details>` : '');
@@ -262,12 +292,15 @@ async function showCharPage(name) {
       return `<h2>${esc(s.title)}</h2>${now.map(([it, j]) => item(it, `s${k}_${j}`)).join('')}` +
         (later.length ? `<details class="spoil"><summary>${T('spoil')}</summary>${later.map(([it, j]) => item(it, `s${k}_${j}`)).join('')}</details>` : '');
     }).join('')}</details>`;
-  page.querySelector('#back').onclick = () => go(S.cur);
+  page.querySelector('#back').onclick = goBack;
   page.querySelector('#plist').onclick = () => showCharList();
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
   page.querySelectorAll('.morebtn[data-mo]').forEach(el => el.onclick = () => moreModal(c, el.dataset.mo));
   page.querySelectorAll('.morebtn[data-an]').forEach(el => el.onclick = () => { const a = c.analysis[+el.dataset.an]; moreModal({ more: { x: a } }, 'x'); });
-  window.scrollTo(0, 0);
+  const tgt = k != null && page.querySelector(`.acard[data-k="${k}"]`);
+  if (y) window.scrollTo(0, y);
+  else if (tgt) { const sp = tgt.closest('details'); if (sp) sp.open = true; const hh = document.querySelector('header').offsetHeight; window.scrollTo(0, tgt.getBoundingClientRect().top + scrollY - hh - 12); tgt.classList.add('flash'); setTimeout(() => tgt.classList.remove('flash'), 2200); }
+  else window.scrollTo(0, 0);
 }
 // the reasoning window: long text is allowed here, in short paragraphs; folded if it reaches past the reader's progress
 // light markup for reasoning text: "## " starts a small heading, **…** is the key sentence, 「…」 quotes from the game stand out
@@ -308,6 +341,8 @@ function showEvTip(ev, anchor, full) {
   const cur = full && qtip.querySelector('.qctx .cur'); if (cur) qtip.scrollTop = cur.offsetTop - qtip.clientHeight / 2 + cur.offsetHeight / 2;
 }
 const showTip = (el, full) => showEvTip(QEV[+el.dataset.qi], el, !!full);
+function xanHTML(lk) { return `<div class="pchar">${icon(lk.name)}<div><div class="xk">${esc(T('xan'))}</div><b>${esc(disp(lk.name))}</b></div></div><div class="xt">${badge(lk.confidence)}${esc(lk.title)}</div><div class="xs">${esc(lk.summary)}</div>`; }
+function showXanTip(lk, el) { clearTimeout(qtTimer); qPinned = false; qtip.innerHTML = xanHTML(lk); qtip.classList.remove('pin'); qAnchor = el; qtip.hidden = false; placeTip(el); }
 function closeTip() { qPinned = false; qtip.hidden = true; qtip.classList.remove('pin'); document.querySelectorAll('.ql.on').forEach(x => x.classList.remove('on')); }
 // beside the text column (aligned with the quoted line) so it never covers what is being read;
 // with no room on either side it docks at the bottom edge, or at the top when the quote itself is low on the screen
@@ -380,7 +415,7 @@ function renderPanels() {
   box.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(top.evmap[k][+n]); });
   box.querySelectorAll('.rc, .chip').forEach(el => el.onclick = () => openChar(el.dataset.c));
   box.querySelectorAll('.mref').forEach(el => el.onclick = () => openMystery(el.dataset.m));
-  box.querySelectorAll('.cpage').forEach(el => el.onclick = () => showCharPage(el.dataset.c));
+  box.querySelectorAll('.cpage').forEach(el => el.onclick = () => showCharPage(el.dataset.c, el.dataset.k != null ? +el.dataset.k : undefined));
 }
 const phead = (kind) => `<div class="ph"><span class="kind">${esc(kind)}</span><span>${S.panels.length > 1 ? `<button id="pall">${T('closeAll')}</button> ` : ''}<button id="pclose">${T('close')}</button></span></div>`;
 function panelHtml(p) {
@@ -405,6 +440,10 @@ function panelHtml(p) {
     return phead(T('idxTitle')) +
       `<h3>${T('mys')}</h3>${ms.length ? ms.map(m => `<div class="card click mref" data-m="${esc(m.id)}"><div class="t"><span class="tag ${last(m).action}">${last(m).action === 'resolve' ? T('resolved') : T('ongoing')}</span>${esc(m.title)}</div><div class="q">${esc(S.acts[m.events[0].act].short)}${T('openedAt')} ・ ${T('clues')} ${m.events.length}${T('unit')}</div></div>`).join('') : `<p class="empty">${T('none')}</p>`}` +
       `<h3 style="margin-top:16px">${T('people')}</h3><div class="chips">${cs.map(c => `<div class="chip" data-c="${esc(c.name)}">${icon(c.name)}<div><div class="nm">${esc(c.disp || c.name)}</div><div class="no">${esc(S.acts[c.notes[0].act].short)}${T('firstAt')}</div></div></div>`).join('')}</div>`;
+  }
+  if (p.type === 'xan') {
+    const lk = p.link;
+    return phead(T('xan')) + `<div class="xpanel">${xanHTML(lk)}</div><p><button class="cpage primary" data-c="${esc(lk.name)}" data-k="${lk.an}">${T('goAn')} →</button></p>`;
   }
   if (p.type === 'ev') {
     const e = p.ev;
