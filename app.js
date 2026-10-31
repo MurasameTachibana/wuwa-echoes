@@ -9,7 +9,7 @@ const UI = {
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
         ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）', evN: '根拠を見る',
-        ess: '章のことば', essTitle: '章のことば', essRead: '編者の読み', essHow: 'この読みについて', essSrc: '出典', essEv: '根拠の台詞',
+        ess: '章のことば', essTitle: '章のことば', essRead: '編者の読み', essHow: 'この読みについて', essSrc: '出典', essEv: '根拠の台詞', top: 'ページの先頭へ',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -20,7 +20,7 @@ const UI = {
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
         ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（文本整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
-        ess: '章之語', essTitle: '章之語', essRead: '編者的解讀', essHow: '關於這個解讀', essSrc: '出處', essEv: '依據的台詞',
+        ess: '章之語', essTitle: '章之語', essRead: '編者的解讀', essHow: '關於這個解讀', essSrc: '出處', essEv: '依據的台詞', top: '回到頁首',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 // evidence chips: up to two stay in view; more fold under one line so reading isn't interrupted
@@ -457,5 +457,36 @@ function panelHtml(p) {
 function openMystery(id, fromPage) { const m = S.fold.M[id]; push({ type: 'mystery', id, label: m ? m.title : id }, fromPage); }
 function openChar(name, fromPage) { push({ type: 'char', name, label: disp(name) }, fromPage); }
 function openEvidence(ev, fromPage) { push({ type: 'ev', ev, label: (ev.speaker + '：' + ev.ja_plain).slice(0, 18) }, fromPage); }
+
+/* reading aids: a thin bar under the header showing how far down the page you are, and a "back to top" button.
+   Both sit outside #app so re-renders don't drop them; reduced-motion readers get no smooth scroll and no cross-fade. */
+const calm = matchMedia('(prefers-reduced-motion: reduce)');
+const rbar = document.createElement('div'); rbar.id = 'rbar'; rbar.hidden = true; document.body.appendChild(rbar);
+const totop = document.createElement('button'); totop.id = 'totop'; totop.hidden = true; totop.textContent = '↑'; document.body.appendChild(totop);
+totop.onclick = () => { window.scrollTo({ top: 0, behavior: calm.matches ? 'auto' : 'smooth' }); totop.blur(); };
+let rTick = false;
+function readTick() {
+  rTick = false;
+  const max = document.documentElement.scrollHeight - innerHeight, onPage = !!app.querySelector('header');
+  rbar.hidden = !onPage || max < innerHeight * 0.5;   // short pages don't need it
+  if (!rbar.hidden) rbar.style.transform = `scaleX(${Math.min(1, Math.max(0, scrollY / max))})`;
+  const up = onPage && scrollY > innerHeight * 1.2;
+  if (up !== !totop.hidden) { totop.hidden = !up; totop.title = T('top'); totop.setAttribute('aria-label', T('top')); }
+}
+const readSoon = () => { if (!rTick) { rTick = true; requestAnimationFrame(readTick); } };
+addEventListener('scroll', readSoon, { passive: true });
+addEventListener('resize', () => {   // rotating a phone across the 700px layout changes the header height; panels and the bar hang below it
+  const h = app.querySelector('header'); if (h) document.documentElement.style.setProperty('--hh', h.offsetHeight + 'px');
+  readSoon();
+});
+new ResizeObserver(readSoon).observe(document.documentElement);   // page swaps and opened <details> change the height
+/* page swaps (act <-> character page / list / essays) cross-fade where the browser supports View Transitions */
+const viaVT = f => function (...a) {
+  if (!document.startViewTransition || calm.matches || document.hidden) return f.apply(this, a);   // a background tab paints no frames to fade
+  const t = document.startViewTransition(() => f.apply(this, a));
+  t.ready.catch(() => {});   // a fade skipped by a quick second click (or a hidden tab) is fine; the page still swaps
+  return t.updateCallbackDone;
+};
+go = viaVT(go); showCharPage = viaVT(showCharPage); showCharList = viaVT(showCharList); showEssays = viaVT(showEssays);
 
 init().catch(e => { app.innerHTML = `<p style="padding:20px">${T('fail')}：${esc(e.message)}</p>`; });
