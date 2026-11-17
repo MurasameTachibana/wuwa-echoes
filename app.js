@@ -3,7 +3,7 @@ const UI = {
   ja: { site: '鳴潮 物語解析', arc: '今州篇', intro: '本文の引用に基づく解析です。進度を選ぶと、その幕までの内容だけが表示されます。', where: 'どこまでプレイ済みですか',
         lang: '言語', read: 'この進度で読む', later: '進度は後からヘッダーで変更できます', index: '索引', setp: '進度を変更', locked: '未プレイの幕（クリックで進度を更新）',
         played: 'はプレイ済みですか？', playedHint: '進度を更新すると、この幕までの内容（解析・人物・謎の進展）が表示されます。', notyet: 'まだ', update: 'プレイ済み、進度を更新',
-        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', facts: 'この幕で分かったこと', seeChar: '人物ファイルで詳しく', menu: 'メニュー', xan: '人物ファイルの考察', goAn: '人物ページのこの考察へ', theme: 'テーマ切替', first: '初登場',
+        noContent: 'この幕の解析はまだ書かれていません。', newM: 'この幕で生まれた謎', advM: '進展した謎', chars: '登場人物', hl: '注目ポイント', facts: 'この幕で分かったこと', seeChar: '人物ファイルで詳しく', menu: 'メニュー', xan: '人物ファイルの考察', goAn: '人物ページのこの考察へ', star: '星間飛行', first: '初登場',
         next: '次の幕へ', nextLocked: '次の幕', gateHint: 'プレイ済みなら進度を更新', end: 'ここまで（続きは準備中）', closeAll: 'すべて閉じる', close: '閉じる',
         mys: '謎', mysRec: '謎の記録', notYet: 'この進度ではまだ表示できません。', profile: '人物紹介', curAct: '（現在の幕まで）', noProfile: 'この進度ではまだ紹介がありません。',
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
@@ -14,7 +14,7 @@ const UI = {
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
         played: '已經玩過了嗎？', playedHint: '更新進度後，會顯示到這一幕為止的內容（解析、人物、謎題進展）。', notyet: '還沒', update: '玩過了，更新進度',
-        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', facts: '這一幕確認的事', seeChar: '詳見人物檔案', menu: '選單', xan: '人物檔案的考察', goAn: '前往人物頁的這段考察', theme: '切換主題', first: '初登場',
+        noContent: '這一幕的解析還沒寫好。', newM: '這一幕出現的謎', advM: '有進展的謎', chars: '登場人物', hl: '注目要點', facts: '這一幕確認的事', seeChar: '詳見人物檔案', menu: '選單', xan: '人物檔案的考察', goAn: '前往人物頁的這段考察', star: '星際航行', first: '初登場',
         next: '下一幕', nextLocked: '下一幕', gateHint: '玩過的話請更新進度', end: '到此為止（後續準備中）', closeAll: '全部關閉', close: '關閉',
         mys: '謎', mysRec: '謎題紀錄', notYet: '這個進度還不能顯示。', profile: '人物介紹', curAct: '（到目前這一幕）', noProfile: '這個進度還沒有介紹。',
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
@@ -112,7 +112,7 @@ function render() {
       <a href="#" id="idx">${T('index')}</a>
       ${S.langs.length > 1 ? `<a href="#" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
       <a href="#" id="setp">${T('setp')}</a>
-      <a href="#" id="thm">${document.documentElement.dataset.theme === 'light' ? '☾' : '☀'} ${T('theme')}</a>
+      <a href="#" id="thm" role="switch" aria-checked="${starOn()}">${starLabel()}</a>
     </nav>
     <div class="wrap main"><div class="page" id="page"></div><div class="panels" id="panels"></div></div>`;
   renderBar();
@@ -120,7 +120,7 @@ function render() {
   app.querySelector('#drawer-bg').onclick = closeDrawer;
   const dr = (id, f) => { const el = app.querySelector('#' + id); if (el) el.onclick = e => { e.preventDefault(); closeDrawer(); f(e); }; };
   dr('setp', () => showStart());
-  dr('thm', () => { const t = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = t; try { localStorage.setItem('wuwa-theme', t); } catch (_) {} app.querySelector('#thm').textContent = (t === 'light' ? '☾' : '☀') + ' ' + T('theme'); });
+  dr('thm', () => { setStar(!starOn()); const a = app.querySelector('#thm'); if (a) { a.textContent = starLabel(); a.setAttribute('aria-checked', starOn()); } });   // 星間飛行（2026-11-17）
   dr('ppl', () => showCharList());
   dr('ess', () => showEssays());
   dr('idx', () => push({ type: 'index', id: 'index', label: T('index') }, true));
@@ -488,5 +488,79 @@ const viaVT = f => function (...a) {
   return t.updateCallbackDone;
 };
 go = viaVT(go); showCharPage = viaVT(showCharPage); showCharList = viaVT(showCharList); showEssays = viaVT(showEssays);
+
+/* ===== 星間飛行（2026-11-17）: ON/OFF switch + fixed star-field canvas behind the content =====
+   ON  = data-theme="dark" (CSS does the look) + animated canvas; OFF = data-theme="light", loop stopped, canvas hidden.
+   Loop is capped at ~30fps, DPR at 2, paused while the tab is hidden, resize debounced; reduced-motion draws one static frame. */
+const starOn = () => document.documentElement.dataset.theme === 'dark';
+const starLabel = () => '✦ ' + T('star') + '　' + (starOn() ? 'ON' : 'OFF');
+function setStar(on) {
+  document.documentElement.dataset.theme = on ? 'dark' : 'light';
+  try { localStorage.setItem('wuwa-star', on ? 'on' : 'off'); } catch (_) {}
+  Stars.sync();
+}
+const Stars = (() => {
+  const cv = document.getElementById('stars'), X = cv && cv.getContext('2d');
+  const rm = matchMedia('(prefers-reduced-motion: reduce)');
+  const STEP = 1000 / 30;
+  let W = 0, H = 0, layers = [], raf = 0, last = 0, T0 = 0, rt = 0, shoot = [], nextShoot = 4, mx = 0, my = 0, pmx = 0, pmy = 0, running = false;
+  function build() {
+    const dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); X.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const k = W < 700 ? .45 : 1;   // phones: fewer stars
+    layers = [0, 1, 2].map(li => { let s = 97 + li * 31; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      const n = Math.round(W * H / [3000, 7000, 16000][li] * k);
+      return Array.from({ length: n }, () => ({ x: rnd() * W, y: rnd() * H, r: (li + 1) * (rnd() * .4 + .28), a: rnd() * .55 + .4, tw: rnd() * 6.28, c: rnd() < .14 ? '#ffe7b5' : rnd() < .2 ? '#bfe9ff' : '#e8f0ff' })); });
+  }
+  function draw(now, still) {
+    X.clearRect(0, 0, W, H);
+    const T = (now - T0) / 1000, sy = window.scrollY || 0;
+    pmx += (mx - pmx) * .06; pmy += (my - pmy) * .06;
+    layers.forEach((layer, li) => {
+      const par = [.05, .12, .24][li], pp = [.006, .015, .03][li], drift = still ? 0 : T * [1.2, 2.4, 4][li];
+      const ox = -pmx * pp, oy = -(sy * par + drift) - pmy * pp;
+      for (const s of layer) {
+        let y = (s.y + oy) % H; if (y < 0) y += H;
+        let x = (s.x + ox) % W; if (x < 0) x += W;
+        X.globalAlpha = still ? s.a : s.a * (.62 + .38 * Math.sin(T * (1.1 + li * .45) + s.tw));
+        X.fillStyle = s.c; X.beginPath(); X.arc(x, y, s.r, 0, 6.283); X.fill();
+      }
+    });
+    X.globalAlpha = 1;
+    if (!still) {   // an occasional shooting star
+      const dt = STEP / 1000; nextShoot -= dt;
+      if (nextShoot < 0) { nextShoot = 5 + Math.random() * 8; const a = .5 + Math.random() * .4; shoot.push({ x: Math.random() * W * .8, y: Math.random() * H * .35, vx: Math.cos(a) * 650, vy: Math.sin(a) * 650, life: 1 }); }
+      for (const s of shoot) { s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt * 1.2;
+        const g = X.createLinearGradient(s.x, s.y, s.x - s.vx * .13, s.y - s.vy * .13);
+        g.addColorStop(0, `rgba(243,213,140,${Math.max(0, s.life) * .8})`); g.addColorStop(1, 'rgba(243,213,140,0)');
+        X.strokeStyle = g; X.lineWidth = 1.3; X.beginPath(); X.moveTo(s.x, s.y); X.lineTo(s.x - s.vx * .13, s.y - s.vy * .13); X.stroke(); }
+      shoot = shoot.filter(s => s.life > 0);
+    }
+  }
+  function loop(now) {
+    raf = requestAnimationFrame(loop);
+    if (now - last < STEP - 2) return;
+    last = now; const t = performance.now(); draw(now, false);
+    Stars.ms += performance.now() - t; Stars.n++;   // rough cost counter (read from the console: Stars.ms / Stars.n)
+  }
+  function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; running = false; }
+  function start() {
+    stop(); if (!starOn() || document.hidden) return;
+    if (!layers.length) build();
+    running = true;
+    if (rm.matches) { draw(performance.now(), true); return; }   // reduced motion: one static frame
+    T0 = T0 || performance.now(); last = 0; raf = requestAnimationFrame(loop);
+  }
+  function sync() {
+    if (!cv) return;
+    if (starOn()) { cv.style.display = 'block'; layers = []; start(); } else { stop(); cv.style.display = 'none'; X.clearRect(0, 0, cv.width, cv.height); }
+  }
+  addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { if (!starOn()) return; layers = []; start(); }, 200); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); else start(); });
+  addEventListener('pointermove', e => { if (e.pointerType === 'mouse') { mx = e.clientX - innerWidth / 2; my = e.clientY - innerHeight / 2; } }, { passive: true });
+  rm.addEventListener && rm.addEventListener('change', () => { if (starOn()) start(); });
+  return { sync, ms: 0, n: 0, bench: n => { const t = performance.now(); for (let i = 0; i < n; i++) draw(t + i * 33, false); return (performance.now() - t) / n; } };   // bench: ms per draw
+})();
+Stars.sync();
 
 init().catch(e => { app.innerHTML = `<p style="padding:20px">${T('fail')}：${esc(e.message)}</p>`; });

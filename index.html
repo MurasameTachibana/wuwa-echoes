@@ -8,9 +8,18 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Serif+TC:wght@500;700&display=swap">
 <link rel="stylesheet" href="style.css">
-<script>try { document.documentElement.dataset.theme = localStorage.getItem('wuwa-theme') || 'dark'; } catch (e) { document.documentElement.dataset.theme = 'dark'; }</script>
+<script>
+/* 星間飛行（2026-11-17）: ON -> data-theme="dark", OFF -> "light". Key wuwa-star = on|off; old wuwa-theme (dark|light) is migrated; no stored value -> prefers-color-scheme */
+(function () {
+  var v = null;
+  try { v = localStorage.getItem('wuwa-star'); if (!v) { var o = localStorage.getItem('wuwa-theme'); v = o === 'dark' ? 'on' : o === 'light' ? 'off' : null; } } catch (e) {}
+  if (v !== 'on' && v !== 'off') v = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'on' : 'off';
+  document.documentElement.dataset.theme = v === 'on' ? 'dark' : 'light';
+})();
+</script>
 </head>
 <body>
+<canvas id="stars" aria-hidden="true"></canvas>
 <div id="app"></div>
 <script src="app.js"></script>
 </body>

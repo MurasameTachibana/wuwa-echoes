@@ -208,7 +208,6 @@ details.bio { margin-top: 24px; border-top: 1px solid var(--line); padding-top: 
 details.bio > summary { cursor: pointer; font-weight: 600; color: var(--muted); padding: 6px 0; }
 
 /* ---------- WuWa-like UI for both themes (colours from --gold); dark-only parts keep the dark selector (thin lines, diamond markers, cut corners, serif headings) ---------- */
-:root[data-theme="dark"] body { background: radial-gradient(ellipse at 50% -10%, #18202b 0%, var(--bg) 55%) fixed; }
 .page h1, .page h2, .start h1, .modal h3, header .brand, .card .t, .chip .nm {
   font-family: "Shippori Mincho", "Noto Serif TC", "Yu Mincho", serif; letter-spacing: .03em; }
 :root[data-theme="dark"] header { background: rgba(13,16,21,.86); backdrop-filter: blur(8px); border-bottom: 1px solid transparent; border-image: linear-gradient(90deg, transparent, var(--gold) 30%, transparent 85%) 1; }
@@ -324,3 +323,48 @@ details.evfold > summary:hover { color: var(--gold); }
 #totop:hover, #totop:focus-visible { color: var(--acc); }
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .18s; }
 @media (prefers-reduced-motion: reduce) { ::view-transition-old(root), ::view-transition-new(root) { animation: none; } }
+
+
+/* ===== 星間飛行（2026-11-17）: ON = data-theme="dark" (OFF = the untouched light theme). The animated star canvas (#stars, drawn by app.js) sits behind everything;
+   a static nebula (CSS gradients, no repaint) sits under it. Text containers are near-opaque glass slabs, so no star is ever bright directly behind a paragraph;
+   glow / gradients / hover light go on header, landing picker, headings, buttons, chips and cards. ===== */
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; display: none; }
+:root[data-theme="dark"] {
+  --glass: rgba(10,14,22,.94); --glass2: rgba(16,22,34,.94); --edge: rgba(243,213,140,.16);
+}
+:root[data-theme="dark"] body { background: transparent; position: relative; }
+:root[data-theme="dark"] body::before { content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(ellipse 60% 45% at 85% 8%, rgba(103,220,198,.10), transparent 70%),
+    radial-gradient(ellipse 55% 50% at 8% 42%, rgba(185,155,255,.10), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 70% 95%, rgba(70,100,200,.09), transparent 70%),
+    radial-gradient(ellipse at 50% -10%, #18202b 0%, #070a10 62%, #03050a 100%); }
+/* glass slabs for everything that carries reading text (blur only on the modest ones; the big reading column is a flat near-opaque slab) */
+:root[data-theme="dark"] .card, :root[data-theme="dark"] .panel, :root[data-theme="dark"] .modal, :root[data-theme="dark"] .start, :root[data-theme="dark"] .chip, :root[data-theme="dark"] #drawer {
+  background: linear-gradient(160deg, var(--glass2), var(--glass)); border-color: var(--edge); box-shadow: 0 0 0 1px rgba(255,255,255,.03) inset, 0 8px 28px rgba(0,0,0,.4); }
+:root[data-theme="dark"] .card, :root[data-theme="dark"] .modal, :root[data-theme="dark"] .start, :root[data-theme="dark"] #drawer { backdrop-filter: blur(6px); }
+:root[data-theme="dark"] .page { background: rgba(8,11,18,.94); box-shadow: 0 0 0 12px rgba(8,11,18,.94); border-radius: 2px; }
+:root[data-theme="dark"] .start { border-color: rgba(217,194,138,.34); box-shadow: 0 0 46px rgba(103,220,198,.10), 0 0 90px rgba(185,155,255,.06), 0 0 0 1px rgba(243,213,140,.08), 0 12px 44px rgba(0,0,0,.5); }
+:root[data-theme="dark"] .start h1 { background: linear-gradient(90deg, #f3d58c, #fff3d0 45%, #7fe3d0); -webkit-background-clip: text; background-clip: text; color: transparent; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 12px rgba(243,213,140,.3)); }
+:root[data-theme="dark"] .actgrid button { background: rgba(255,255,255,.03); }
+:root[data-theme="dark"] .actgrid button:hover { border-color: var(--gold); background: radial-gradient(circle at 50% 0%, rgba(243,213,140,.16), transparent 75%), rgba(255,255,255,.03); box-shadow: 0 0 14px rgba(243,213,140,.22); }
+:root[data-theme="dark"] .actgrid button.sel { background: radial-gradient(circle at 50% 0%, rgba(103,220,198,.18), transparent 75%), var(--acc-bg); box-shadow: 0 0 14px rgba(103,220,198,.22); }
+/* header: near-opaque glass, gold hairline, glowing brand */
+:root[data-theme="dark"] header { background: rgba(7,10,16,.93); backdrop-filter: blur(8px); box-shadow: 0 6px 26px rgba(0,0,0,.45), 0 1px 18px rgba(243,213,140,.07); }
+:root[data-theme="dark"] header .brand, :root[data-theme="dark"] .page h2 { text-shadow: 0 0 14px rgba(243,213,140,.35); }
+:root[data-theme="dark"] .page h1 { text-shadow: 0 0 16px rgba(127,227,208,.22); }
+:root[data-theme="dark"] .page h2::before { box-shadow: 0 0 8px rgba(243,213,140,.7); }
+:root[data-theme="dark"] .page h2::after { background: linear-gradient(90deg, rgba(243,213,140,.45), rgba(127,227,208,.15) 50%, transparent); }
+/* buttons, chips, cards: gold/cyan light on hover */
+:root[data-theme="dark"] button:hover, :root[data-theme="dark"] .chip:hover, :root[data-theme="dark"] .ev:hover, :root[data-theme="dark"] header .set:hover { box-shadow: 0 0 12px rgba(217,194,138,.3); }
+:root[data-theme="dark"] button.primary { background: linear-gradient(135deg, #f3d58c, #d9c28a 60%, #b9d9c8); }
+:root[data-theme="dark"] button.primary:hover { box-shadow: 0 0 18px rgba(243,213,140,.5); }
+:root[data-theme="dark"] .card.click:hover { border-color: var(--gold); box-shadow: 0 0 18px rgba(243,213,140,.18), 0 8px 28px rgba(0,0,0,.4); }
+:root[data-theme="dark"] .ctabs button.on { box-shadow: 0 0 12px rgba(243,213,140,.25); }
+:root[data-theme="dark"] .modal-bg { background: rgba(3,5,10,.78); backdrop-filter: blur(3px); }
+:root[data-theme="dark"] .modal.wide { box-shadow: 0 0 0 1px rgba(243,213,140,.12), 0 0 60px rgba(103,220,198,.08), 0 20px 60px rgba(0,0,0,.6); }
+:root[data-theme="dark"] .anb, :root[data-theme="dark"] .badge { box-shadow: 0 0 8px -2px currentColor; }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wuwa-twinkle { 0%,100% { opacity: .75; } 50% { opacity: 1; } }
+  :root[data-theme="dark"] .page h2::before { animation: wuwa-twinkle 4.5s ease-in-out infinite; }
+}
