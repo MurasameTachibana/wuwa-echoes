@@ -9,7 +9,7 @@ const UI = {
         idxTitle: '索引（この進度まで）', resolved: '解決', ongoing: '継続中', openedAt: ' で提示', clues: '手がかり', unit: '件', none: 'まだありません。', people: '人物', firstAt: ' で初登場',
         line: '本文', ctx: '前後の文脈', jaFallback: '', fail: '読み込みに失敗しました', mt: '',
         ppl: '人物考察', pplTitle: '人物考察（この進度まで）', tabPlay: '主要人物', tabOther: 'その他の人物', bio: '人物の歩み（本文の整理）', anN: '考察', noAn: 'この人物の考察はまだありません。', back: '← 幕に戻る', spoil: 'この先は、現在の進度より後の内容を含む可能性があります（クリックで開く）', more: '推理を読む', charPage: '人物ページを開く', noChars: 'この進度ではまだ表示できる人物がいません。', since: ' から', loading: '読み込み中…', analysis: '考察', offMain: '本編では未登場（活動・地域任務など）', evN: '根拠を見る',
-        ess: '章のことば', essTitle: '章のことば', essRead: '編者の読み', essHow: 'この読みについて', essSrc: '出典', essEv: '根拠の台詞', top: 'ページの先頭へ',
+        ess: '章のことば', essTitle: '章のことば', essRead: '編者の読み', essHow: 'この読みについて', essSrc: '出典', essEv: '根拠の台詞', yori: '寄り道', yoriEv: 'ゲームの中の根拠', yoriSrc: '出典', yoriAll: 'すべて', yoriNone: 'まだ読めるカードがありません。', yoriLocked: 'この先の物語に、あと {n} 枚あります。', yoriRel: 'あわせて読む：', top: 'ページの先頭へ',
         credit: '企画・監修：橘なるもの ／ 解析・執筆：Claude（Anthropic）。非公式のファンサイトです。ゲーム本文の著作権は Kuro Games に帰属します。' },
   zh: { site: '鳴潮 劇情解析', arc: '今州篇', intro: '依據遊戲文本引用的劇情解析。選擇遊戲進度後，只會顯示到該幕為止的內容。', where: '你玩到哪裡了？',
         lang: '語言', read: '以這個進度閱讀', later: '之後可以在上方變更進度', index: '索引', setp: '變更進度', locked: '尚未遊玩的幕（點擊以更新進度）',
@@ -20,7 +20,7 @@ const UI = {
         idxTitle: '索引（到目前進度）', resolved: '已解開', ongoing: '進行中', openedAt: ' 提出', clues: '線索', unit: ' 條', none: '還沒有。', people: '人物', firstAt: ' 初登場',
         line: '遊戲文本', ctx: '前後文', jaFallback: '（此句沒有官方中文對照，顯示日文原句）', fail: '載入失敗', mt: '說明文字為機器翻譯（日文版為原稿），遊戲台詞為官方中文版。',
         ppl: '人物考察', pplTitle: '人物考察（到目前進度）', tabPlay: '主要人物', tabOther: '其他人物', bio: '人物經歷（文本整理）', anN: '考察', noAn: '這個人物還沒有考察。', back: '← 回到劇情', spoil: '以下內容可能含有目前進度之後的劇透（點擊展開）', more: '閱讀推理', charPage: '開啟人物頁面', noChars: '這個進度還沒有可以顯示的人物。', since: ' 起', loading: '載入中…', analysis: '考察', offMain: '主線未登場（活動、地區任務等）', evN: '查看根據',
-        ess: '章之語', essTitle: '章之語', essRead: '編者的解讀', essHow: '關於這個解讀', essSrc: '出處', essEv: '依據的台詞', top: '回到頁首',
+        ess: '章之語', essTitle: '章之語', essRead: '編者的解讀', essHow: '關於這個解讀', essSrc: '出處', essEv: '依據的台詞', yori: '繞個路', yoriEv: '遊戲裡的依據', yoriSrc: '出處', yoriAll: '全部', yoriNone: '目前還沒有可以閱讀的卡片。', yoriLocked: '後面的劇情裡，還有 {n} 張。', yoriRel: '接著讀：', top: '回到頁首',
         credit: '企劃・監修：橘なるもの ／ 解析・撰寫：Claude（Anthropic）。非官方粉絲網站，遊戲文本版權屬於 Kuro Games。' } };
 const T = k => (UI[S.lang] || UI.ja)[k];
 // evidence chips: up to two stay in view; more fold under one line so reading isn't interrupted
@@ -37,7 +37,8 @@ function restore() { try { const o = JSON.parse(localStorage.getItem('wuwa_site'
 
 async function loadLang() { S.acts = await getJSON(`data/${S.lang}/acts.json`); S.chars = await getJSON(`data/${S.lang}/characters.json`); S.bundles = {}; S.cpages = {};
   try { S.cidx = await getJSON(`data/${S.lang}/chars.json`); } catch (e) { S.cidx = []; }
-  try { S.essays = await getJSON(`data/${S.lang}/essays.json`); } catch (e) { S.essays = null; } }
+  try { S.essays = await getJSON(`data/${S.lang}/essays.json`); } catch (e) { S.essays = null; }
+  try { S.yori = await getJSON(`data/${S.lang}/yorimichi.json`); } catch (e) { S.yori = null; } }
 async function init() {
   try { S.langs = (await getJSON('data/langs.json')).langs; } catch (e) {}
   restore(); if (!S.langs.includes(S.lang)) S.lang = 'ja';
@@ -109,6 +110,7 @@ function render() {
     <nav id="drawer" hidden aria-label="${T('menu')}">
       <a href="#" id="ppl">${T('ppl')}</a>
       ${S.essays ? `<a href="#" id="ess">${T('ess')}</a>` : ''}
+      ${S.yori ? `<a href="#" id="yori">${T('yori')}</a>` : ''}
       <a href="#" id="idx">${T('index')}</a>
       ${S.langs.length > 1 ? `<a href="#" id="lng">${S.lang === 'zh' ? '日本語' : '中文'}</a>` : ''}
       <a href="#" id="setp">${T('setp')}</a>
@@ -123,6 +125,7 @@ function render() {
   dr('thm', () => { setStar(!starOn()); const a = app.querySelector('#thm'); if (a) { a.textContent = starLabel(); a.setAttribute('aria-checked', starOn()); } });   // 星間飛行（2026-11-17）
   dr('ppl', () => showCharList());
   dr('ess', () => showEssays());
+  dr('yori', () => showYori());
   dr('idx', () => push({ type: 'index', id: 'index', label: T('index') }, true));
   dr('lng', async () => { S.lang = S.lang === 'zh' ? 'ja' : 'zh'; S.panels = []; save(); await loadLang(); await loadBundles(); document.documentElement.lang = S.lang === 'zh' ? 'zh-Hant' : 'ja'; render(); });
   renderAct(); renderPanels();
@@ -141,6 +144,8 @@ addEventListener('popstate', e => {
   else if (st.v === 'char') showCharPage(st.name, st.k, true, st.y);
   else if (st.v === 'list') showCharList(st.tab, true, st.y);
   else if (st.v === 'ess') showEssays(true, st.y);
+  else if (st.v === 'yori') showYori(st.tag, true, st.y);
+  else if (st.v === 'yorid') showYoriCard(st.id, true, st.y);
 });
 /* progress bar: one group per arc (篇); only one arc shows its acts, the others fold into a single button */
 const arcGroups = () => { const g = []; S.acts.forEach((a, i) => { if (!g.length || g[g.length - 1].arc !== a.arc) g.push({ arc: a.arc, idx: [] }); g[g.length - 1].idx.push(i); }); return g; };
@@ -242,6 +247,53 @@ function showEssays(fromPop, y) {
     E.entries.map(card).join('');
   page.querySelector('#back').onclick = goBack;
   page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
+  window.scrollTo(0, y || 0);
+}
+/* 寄り道 (2026-11-19): light reading on real-world works a scene seems to echo. Many small cards, like the character list:
+   the list is in story order, grouped by arc, with tag filters; a card opens on its own page. Cards past the reader's
+   progress are not listed (only counted). Body strings: "## …" small heading, "> …" a quoted block (lines split by \n; a
+   leading 「原作：」 label is set apart), else a paragraph. At the bottom, a small "related" link only for unlocked cards. */
+function showYori(tag, fromPop, y) {
+  if (!fromPop) navTo({ v: 'yori', tag });
+  const page = app.querySelector('#page'); S.panels = []; renderPanels();
+  const E = S.yori || { entries: [], tags: {} };
+  if (tag !== undefined) S.ytag = tag; tag = S.ytag || '';
+  const open = E.entries.filter(e => e.reveal <= S.progress), locked = E.entries.length - open.length;
+  const used = Object.keys(E.tags).filter(k => open.some(e => e.tags.includes(k)));
+  const shown = open.filter(e => !tag || e.tags.includes(tag));
+  const tile = e => `<a href="#" class="yori-tile" data-y="${esc(e.id)}"><div class="yori-tt">${esc(e.title)}</div>${e.sub ? `<div class="yori-ts">${esc(e.sub)}</div>` : ''}
+    <div class="yori-tags">${e.tags.map(t => `<span>${esc(E.tags[t] || t)}</span>`).join('')}<span class="yori-at">${esc(S.acts[e.reveal] ? S.acts[e.reveal].short : '')}</span></div></a>`;
+  const groups = arcGroups().map(g => ({ arc: g.arc, es: shown.filter(e => g.idx.includes(e.reveal)) })).filter(g => g.es.length);
+  page.innerHTML = `<p><button id="back">${T('back')}</button></p><h1 class="yori-h1">${T('yori')}</h1><p class="yori-intro">${esc(E.intro || '')}</p>` +
+    (used.length > 1 ? `<div class="ctabs yori-filter"><button data-t="" class="${tag ? '' : 'on'}">${T('yoriAll')}</button>${used.map(k => `<button data-t="${esc(k)}" class="${tag === k ? 'on' : ''}">${esc(E.tags[k])}</button>`).join('')}</div>` : '') +
+    (groups.length ? groups.map(g => `<h2>${esc(g.arc)}</h2><div class="yori-grid">${g.es.map(tile).join('')}</div>`).join('') : `<p class="empty">${T('yoriNone')}</p>`) +
+    (locked ? `<p class="yori-locked">${T('yoriLocked').replace('{n}', locked)}</p>` : '');
+  page.querySelector('#back').onclick = goBack;
+  page.querySelectorAll('.yori-filter button').forEach(b => b.onclick = () => { try { history.replaceState({ v: 'yori', tag: b.dataset.t }, ''); } catch (e) {} showYori(b.dataset.t, true); });
+  page.querySelectorAll('.yori-tile').forEach(a => a.onclick = ev => { ev.preventDefault(); showYoriCard(a.dataset.y); });
+  window.scrollTo(0, y || 0);
+}
+function showYoriCard(id, fromPop, y) {
+  const E = S.yori || { entries: [], tags: {} };
+  const e = E.entries.find(x => x.id === id);
+  if (!e || e.reveal > S.progress) return showYori(undefined, fromPop);
+  if (!fromPop) navTo({ v: 'yorid', id });
+  const page = app.querySelector('#page'); S.panels = []; renderPanels(); S.evmap = { y: e.evidence };
+  const line = t => { const m = t.match(/^([^：:「」]{1,6})[：:](.*)$/s); return m ? `<span class="yori-lab">${esc(m[1])}</span>${esc(m[2])}` : esc(t); };
+  const block = t => t.startsWith('## ') ? `<h3 class="yori-h">${esc(t.slice(3))}</h3>`
+    : t.startsWith('> ') ? `<blockquote class="yori-q">${t.slice(2).split('\n').map(l => `<div>${line(l)}</div>`).join('')}</blockquote>`
+    : `<p>${esc(t)}</p>`;
+  const rel = e.related.map(r => E.entries.find(x => x.id === r)).filter(x => x && x.reveal <= S.progress);
+  page.innerHTML = `<p><button id="back">${T('back')}</button></p>
+    <article class="yori"><div class="yori-tags">${e.tags.map(t => `<span>${esc(E.tags[t] || t)}</span>`).join('')}</div>
+      <h1 class="yori-t">${esc(e.title)}</h1>${e.sub ? `<div class="yori-sub">${esc(e.sub)}</div>` : ''}
+      <div class="yori-body">${e.body.map(block).join('')}</div>
+      <p class="yori-src"><span class="yori-lab">${T('yoriSrc')}</span>${esc(e.source)}</p>
+      <details class="yori-ev"><summary>${T('yoriEv')}</summary>${evChips(e.evidence, 'y')}</details></article>` +
+    (rel.length ? `<p class="yori-rel">${T('yoriRel')}${rel.map(r => `<a href="#" data-y="${esc(r.id)}">${esc(r.title)}</a>`).join('、')}</p>` : '');
+  page.querySelector('#back').onclick = goBack;
+  page.querySelectorAll('.ev').forEach(el => el.onclick = () => { const [k, n] = el.dataset.ev.split(':'); openEvidence(S.evmap[k][+n], true); });
+  page.querySelectorAll('.yori-rel a').forEach(a => a.onclick = ev => { ev.preventDefault(); showYoriCard(a.dataset.y); });
   window.scrollTo(0, y || 0);
 }
 function showCharList(tab, fromPop, y) {
@@ -487,7 +539,7 @@ const viaVT = f => function (...a) {
   t.ready.catch(() => {});   // a fade skipped by a quick second click (or a hidden tab) is fine; the page still swaps
   return t.updateCallbackDone;
 };
-go = viaVT(go); showCharPage = viaVT(showCharPage); showCharList = viaVT(showCharList); showEssays = viaVT(showEssays);
+go = viaVT(go); showCharPage = viaVT(showCharPage); showCharList = viaVT(showCharList); showEssays = viaVT(showEssays); showYori = viaVT(showYori); showYoriCard = viaVT(showYoriCard);
 
 /* ===== 星間飛行（2026-11-17）: ON/OFF switch + fixed star-field canvas behind the content =====
    ON  = data-theme="dark" (CSS does the look) + animated canvas; OFF = data-theme="light", loop stopped, canvas hidden.
