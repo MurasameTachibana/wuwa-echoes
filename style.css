@@ -306,6 +306,9 @@ details.evfold > summary:hover { color: var(--gold); }
 .yori-h { font-size: 15px; font-weight: 600; color: var(--acc); margin: 24px 0 10px; }
 .yori-q { margin: 4px 0 14px; padding: 10px 14px; border-left: 3px solid var(--line); border-radius: 0 8px 8px 0; background: rgba(127, 127, 127, .08); font-size: 14px; line-height: 1.8; }
 .yori-q div + div { margin-top: 6px; }
+.yori-fig { margin: 18px 0 22px; text-align: center; }
+.yori-fig svg { width: 100%; max-width: 560px; height: auto; color: var(--ink); }
+.yori-fig figcaption { margin-top: 6px; font-size: 13px; color: var(--muted); }
 .yori-lab { display: inline-block; font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 6px; margin-right: 6px; vertical-align: 1px; }
 .yori-src { font-size: 13px; color: var(--muted); margin: 16px 0 6px; }
 .yori-ev { font-size: 13px; color: var(--muted); }

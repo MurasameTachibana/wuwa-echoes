@@ -280,7 +280,9 @@ function showYoriCard(id, fromPop, y) {
   if (!fromPop) navTo({ v: 'yorid', id });
   const page = app.querySelector('#page'); S.panels = []; renderPanels(); S.evmap = { y: e.evidence };
   const line = t => { const m = t.match(/^([^：:「」]{1,6})[：:](.*)$/s); return m ? `<span class="yori-lab">${esc(m[1])}</span>${esc(m[2])}` : esc(t); };
-  const block = t => t.startsWith('## ') ? `<h3 class="yori-h">${esc(t.slice(3))}</h3>`
+  const fig = t => { const [n, cap] = t.slice(5).split('|'); const svg = (e.figs || {})[n.trim()];
+    return svg ? `<figure class="yori-fig">${svg}${cap ? `<figcaption>${esc(cap.trim())}</figcaption>` : ''}</figure>` : ''; };
+  const block = t => t.startsWith('!fig ') ? fig(t) : t.startsWith('## ') ? `<h3 class="yori-h">${esc(t.slice(3))}</h3>`
     : t.startsWith('> ') ? `<blockquote class="yori-q">${t.slice(2).split('\n').map(l => `<div>${line(l)}</div>`).join('')}</blockquote>`
     : `<p>${esc(t)}</p>`;
   const rel = e.related.map(r => E.entries.find(x => x.id === r)).filter(x => x && x.reveal <= S.progress);
