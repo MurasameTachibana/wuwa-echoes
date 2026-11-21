@@ -195,8 +195,8 @@ details.spoil[open] { background: transparent; }
 .q { color: var(--quote, inherit); }
 
 /* character list: two tabs, cards of one size */
-.ctabs { display: flex; gap: 6px; margin: 4px 0 8px; }
-.ctabs button { padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel); color: var(--ink); cursor: pointer; }
+.ctabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0 8px; }
+.ctabs button { white-space: nowrap; padding: 6px 16px; border-radius: 999px; border: 1px solid var(--line2); background: var(--panel); color: var(--ink); cursor: pointer; }
 .ctabs button.on { background: var(--acc); border-color: var(--acc); color: var(--panel); }
 .cgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .cgrid .chip { height: 84px; min-width: 0; }
